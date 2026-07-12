@@ -1,0 +1,31 @@
+{
+  "files": {
+    "package.json": {
+      "size": 330,
+      "mtimeMs": 1783693444040.8923,
+      "sha256_16": "c645572ee6c7ac1f"
+    },
+    "README.md": {
+      "size": 100,
+      "mtimeMs": 1783693444041.892,
+      "sha256_16": "4c1cee4dc1e85e37"
+    },
+    "src/App.ts": {
+      "size": 211,
+      "mtimeMs": 1783693444042.893,
+      "sha256_16": "e98f8612fe28cf94"
+    },
+    "src/utils/formatStatus.ts": {
+      "size": 382,
+      "mtimeMs": 1783693444041.892,
+      "sha256_16": "03864b5a779bd65a"
+    },
+    "tsconfig.json": {
+      "size": 175,
+      "mtimeMs": 1783693444045.073,
+      "sha256_16": "a19bea7544605029"
+    }
+  },
+  "nttcFiles": [],
+  "takenAt": "2026-07-10T14:25:56.560Z"
+}

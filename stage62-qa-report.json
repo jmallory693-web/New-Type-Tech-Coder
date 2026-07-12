@@ -1,0 +1,43 @@
+{
+  "stage": "62",
+  "phase": "2",
+  "timestamp": "2026-07-10T04:19:33.079Z",
+  "disposableProject": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage47-Disposable",
+  "passed": [
+    "App relaunched packaged after close",
+    "Code Context Pack metadata restored",
+    "Code AI response restored",
+    "Patch Draft restored",
+    "Patch Draft Safety Review restored",
+    "Role mappings restored",
+    "No auto Ollama activity on reopen",
+    "Project files unchanged after reopen"
+  ],
+  "failed": [],
+  "ollama": {},
+  "safetyConcerns": [],
+  "confusingUx": [],
+  "tinyFixes": [],
+  "laterFeatures": [
+    "Optional in-app progress indicator for Ollama calls without adding auto-execution."
+  ],
+  "goNoGo": "Go for live local-AI code review on disposable project copies",
+  "validation": {
+    "relaunch": {
+      "pageUrl": "file:///C:/Users/Justin%20Mallory/OneDrive/Desktop/New%20Type%20Tech%20Coder/release/win-unpacked/resources/app.asar/dist/index.html",
+      "usesVite": false
+    },
+    "restore": {
+      "codeContextPreview": true,
+      "codeContextAi": true,
+      "patchDraft": true,
+      "safetyReview": true,
+      "codeAiModel": "qwen2.5-coder:7b",
+      "patchDraftModel": "qwen2.5-coder:7b",
+      "safetyRecommendation": "Do not proceed yet",
+      "mappingCodeReview": "qwen2.5-coder:7b",
+      "mappingPatchDraft": "qwen2.5-coder:7b",
+      "autoBusy": false
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "stage": 13,
+  "testedAt": "2026-07-09T10:45:00Z",
+  "packagedApp": "release/win-unpacked/New Type Tech Coder.exe",
+  "launchedWithoutVite": true,
+  "disposableProject": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage13-Disposable",
+  "passed": [
+    "Launch from file:// asar (no Vite/dev server)",
+    "Window title: New Type Tech Coder",
+    "Inspect-only / Edit mode unavailable / writesAllowed false",
+    "Live Qwen disabled with clear reason",
+    "Project open + OneDrive warning (isOneDrive true)",
+    "Project Summary plain English; no .env secrets; no raw source body",
+    "Symlink/junction skip shown (junction-docs)",
+    "Copy-Paste Review Report title + inspect-only + live Qwen disabled wording",
+    "Safety Backup folder-snapshot in app userData; skipped links shown; no backup inside project",
+    "Restore Last Safety Backup removed post-backup marker on disposable project",
+    "Build blocked by prebuild/postbuild lifecycle hooks (named in reason)",
+    "runSafeCheck('build') stayed blocked",
+    "Lint allowlisted check ran after detection and produced output summary",
+    "Qwen Inspect Prompt generated; live still disabled; no secrets",
+    "External review risky phrases (rm -rf, deploy) warned; nothing executed",
+    "History under AppData\\Roaming\\New Type Tech Coder\\history; not in project folder",
+    "Close/relaunch: recent project listed; reopen loads previous summary; no auto scan/AI/command/restore",
+    "Exposed preload API has no edit/write/shell/terminal surfaces"
+  ],
+  "failedOrLimited": [
+    {
+      "item": "Local AI Ask",
+      "result": "Ollama connection reported ready, but Ask failed with clear HTTP 404: model 'qwen2.5-coder' not found. Not a safety bug; model missing on machine."
+    },
+    {
+      "item": "Native folder picker / Notepad paste / restore confirm dialog",
+      "result": "Exercised via CDP + window.nttc (openRecentProject / IPC). Native dialogs and Notepad paste not driven by automation; UI confirm text for restore and safe checks verified in source."
+    }
+  ],
+  "safetyBugsFound": [
+    {
+      "severity": "critical-for-packaged-use",
+      "bug": "Sandboxed preload required ../shared/types and failed to load; window.nttc missing in packaged app",
+      "fix": "Inline IPC channel strings in src/preload/index.ts"
+    },
+    {
+      "severity": "medium",
+      "bug": "UTF-8 BOM in package.json made JSON.parse fail; scripts undetected so lifecycle-hook block never surfaced",
+      "fix": "stripUtf8Bom before JSON.parse in ProjectScanner.ts"
+    }
+  ],
+  "uxIssues": [
+    "Default Electron icon (no custom build/icon.ico) — packaging note from Stage 12, not a Stage 13 blocker",
+    "Local AI 'connection ready' can still fail Ask if configured model is missing — message is clear"
+  ],
+  "packagingIssues": [
+    "Preload relative require broke under sandbox:true (fixed)",
+    "Setup.exe installer not re-tested after fixes; win-unpacked used as primary Stage 13 target"
+  ],
+  "fixesRequired": true,
+  "filesChanged": [
+    {
+      "path": "src/preload/index.ts",
+      "why": "Sandboxed preload cannot require relative CommonJS modules; inlined IPC channel strings so contextBridge exposes nttc in packaged builds"
+    },
+    {
+      "path": "src/main/scan/ProjectScanner.ts",
+      "why": "Strip UTF-8 BOM from package.json so Windows-saved manifests still parse and lifecycle-hook blocking can apply"
+    }
+  ],
+  "confirmations": {
+    "liveQwenExecutionDisabled": true,
+    "noEditMode": true,
+    "noAiEditing": true,
+    "noDirectAiFileAccess": true,
+    "noArbitraryTerminal": true,
+    "noCustomCommandTyping": true,
+    "safetyBackupRestoreDisposableOnly": true,
+    "buildTestChecksAllowlistedAndLifecycleBlocked": true,
+    "historyInAppOwnedStorage": true,
+    "safeForLocalV1Use": true
+  }
+}

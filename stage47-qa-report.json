@@ -1,0 +1,86 @@
+{
+  "stage": "47",
+  "phase": "2",
+  "timestamp": "2026-07-09T21:53:33.526Z",
+  "disposableProject": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage47-Disposable",
+  "isDisposableCopy": true,
+  "validation": {
+    "relaunch": {
+      "ok": true,
+      "pageUrl": "file:///C:/Users/Justin%20Mallory/OneDrive/Desktop/New%20Type%20Tech%20Coder/release/win-unpacked/resources/app.asar/dist/index.html",
+      "usesVite": false
+    },
+    "restore": {
+      "hasProject": true,
+      "summaryFromHistory": true,
+      "reviewPack": true,
+      "checkpoint": true,
+      "checkpointVerified": true,
+      "builderPlan": false,
+      "comparison": true,
+      "implementationReview": true,
+      "roleMappingCount": 13,
+      "backlogCount": 7,
+      "advisor": false,
+      "autoActivity": {
+        "summarizing": false,
+        "advisorBusy": false,
+        "checkpointBusy": false,
+        "safeChecksRunning": false
+      }
+    }
+  },
+  "safety": {
+    "confirmationChecklist": {
+      "writesAllowed false": false,
+      "editModeAvailable false": false,
+      "liveInspectEnabled false": false,
+      "inspect-only mode": false
+    }
+  },
+  "uxNotes": [],
+  "passed": [
+    "App relaunched packaged (post-close)",
+    "Recent project reopened",
+    "Summary/history restored",
+    "Review pack restored",
+    "Safety Backup record restored",
+    "Safety Backup still verified/readable",
+    "Builder Plan Comparison restored",
+    "Implementation Review restored",
+    "Role Model Mapping restored",
+    "Backlog restored",
+    "No auto scan/AI/check/restore on reopen",
+    "Project files still unchanged after relaunch"
+  ],
+  "failed": [
+    "Safety check failed: inspectOnly badge",
+    "Safety check failed: writesAllowed false",
+    "Safety check failed: editModeAvailable false",
+    "Safety check failed: liveInspectEnabled false",
+    "Safety check failed: Live Qwen disabled UI",
+    "Safety check failed: no edit mode UI",
+    "Safety check failed: no TTS UI",
+    "Safety check failed: no arbitrary terminal UI",
+    "Safety check failed: no custom command UI",
+    "Safety check failed: inspect-only mode"
+  ],
+  "confusingUx": [],
+  "safetyConcerns": [
+    "inspectOnly badge not confirmed",
+    "writesAllowed false not confirmed",
+    "editModeAvailable false not confirmed",
+    "liveInspectEnabled false not confirmed",
+    "Live Qwen disabled UI not confirmed",
+    "no edit mode UI not confirmed",
+    "no TTS UI not confirmed",
+    "no arbitrary terminal UI not confirmed",
+    "no custom command UI not confirmed",
+    "inspect-only mode not confirmed"
+  ],
+  "tinyFixes": [],
+  "laterFeatures": [
+    "Optional guided first-run tour for non-coders (separate from V1 safety scope)."
+  ],
+  "goNoGo": "No-go until bugs are fixed."
+}

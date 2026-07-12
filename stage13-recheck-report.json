@@ -1,0 +1,65 @@
+{
+  "failures": [],
+  "notes": [],
+  "lifecycle": {
+    "scripts": [
+      "build",
+      "lint",
+      "postbuild",
+      "prebuild",
+      "test"
+    ],
+    "buildAvailable": true,
+    "buildBlocked": true,
+    "buildReason": "This check was blocked because package managers can automatically run pre/post scripts. The project contains postbuild, prebuild. A non-coder should review this before running it.",
+    "blockedHooks": [
+      {
+        "script": "build",
+        "hooks": [
+          "postbuild",
+          "prebuild"
+        ],
+        "reason": "This check was blocked because package managers can automatically run pre/post scripts. The project contains postbuild, prebuild. A non-coder should review this before running it."
+      }
+    ]
+  },
+  "lint": {
+    "status": "passed",
+    "summary": "Lint passed. No lint errors were reported.",
+    "output": "> nttc-stage13-disposable@0.0.1 lint\n> node -e \"console.log('lint ok')\"\n\nlint ok\n\nnpm warn Unknown env config \"devdir\". This will stop working in the next major version of npm."
+  },
+  "historyRelaunch": {
+    "recent": [
+      {
+        "projectName": "NTTC-Stage13-Disposable",
+        "projectPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage13-Disposable",
+        "lastOpenedAt": "2026-07-09T10:42:28.412Z",
+        "lastScanAt": "2026-07-09T10:42:27.977Z",
+        "lastCheckpointStatus": null,
+        "pathMissing": false
+      }
+    ],
+    "hasSummaryRecord": true,
+    "rawKeys": [
+      "version",
+      "updatedAt",
+      "recentProjects",
+      "providerSettings",
+      "actionLog",
+      "projects"
+    ],
+    "afterReopen": {
+      "hasProject": true,
+      "summaryFromHistory": true,
+      "hasSummary": true,
+      "autoScanRunning": false,
+      "advisorBusy": false,
+      "checkpointBusy": false,
+      "statusBits": {
+        "summaryStatus": null,
+        "historyNote": "Session history saved for this project."
+      }
+    }
+  },
+  "uiText": "New Type Tech Coder\nPlain-English control panel for local AI coding agents\nNo project selected\nInspect-only: no edits allowed\nLocal AI reviewer configured — test connection\nNo safety backup yet\nLive Qwen is disabled for safety\nEdit mode unavailable\nProject Desk\n\nChoose a folder. No code editing here — inspect-only.\n\nRECOMMENDED WORKFLOW\nFollow these steps in order when you can. Optional steps stay optional. Nothing risky runs until you click and confirm.\n1\nSelect a project folder\nNext\nUse Select Project Folder on the Project Desk.\n2\nSummarize the project\nNot yet\nClick Summarize Project after selecting a folder.\n3\nCreate a safety backup\nNot yet\nClick Create Safety Backup before risky work.\n4\nRun build/test checks if available\nNot yet\nSelect a project first.\n5\nGenerate a copy-paste review re"
+}

@@ -1,0 +1,39 @@
+{
+  "projectPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage47-Disposable",
+  "summaryAt": null,
+  "reviewPackAt": "2026-07-09T21:50:16.180Z",
+  "checkpointAt": "2026-07-09T21:50:16.393Z",
+  "builderPlanAt": null,
+  "comparisonAt": "2026-07-09T21:52:19.599Z",
+  "implementationAt": "2026-07-09T21:52:19.669Z",
+  "roleMapping": {
+    "general-reviewer": "qwen2.5-coder:7b",
+    "architect-planner": "qwen2.5-coder:7b",
+    "bug-risk-reviewer": "qwen2.5-coder:7b",
+    "patch-planner": "qwen2.5-coder:7b",
+    "test-planner": "qwen2.5-coder:7b",
+    "ux-reviewer": "qwen2.5-coder:7b",
+    "safety-reviewer": "qwen2.5-coder:7b",
+    "project-foreman": "qwen2.5-coder:7b",
+    "safety-officer": "qwen2.5-coder:7b",
+    "review-narrator": "qwen2.5-coder:7b",
+    "builder-liaison": "qwen2.5-coder:7b",
+    "release-announcer": "qwen2.5-coder:7b",
+    "builder-plan-mode": "qwen2.5-coder:7b"
+  },
+  "backlogIds": [
+    "1783633939787-2udsce",
+    "1783633677890-vxv84m",
+    "1783613506061-s1xp0t",
+    "1783613505949-c21vwu",
+    "1783613505837-hqpvao",
+    "1783613505717-ptfb6y",
+    "1783613447570-bw2br9"
+  ],
+  "advisorAt": null,
+  "fingerprints": {
+    "package.json": "ff7c5d9956f8f25042c6914923973bfb1749f4294612c5c314c3a061434beaa2",
+    "README.md": "5426289e0920254690a4a64e40c40c478352671f013ed752fcdf1bd7503578d1",
+    "src/renderer/App.tsx": "8ee1bd06360112b1ee567a2bc56f74571ff2d1eaeb5548a8218dec251727087f"
+  }
+}

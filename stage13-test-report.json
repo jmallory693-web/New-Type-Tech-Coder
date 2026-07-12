@@ -1,0 +1,104 @@
+{
+  "launchedWithoutVite": true,
+  "title": "New Type Tech Coder",
+  "pageUrl": "file:///C:/Users/Justin%20Mallory/OneDrive/Desktop/New%20Type%20Tech%20Coder/release/win-unpacked/resources/app.asar/dist/index.html",
+  "inspectOnly": true,
+  "liveQwenDisabled": true,
+  "projectSelected": {
+    "name": "NTTC-Stage13-Disposable",
+    "path": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage13-Disposable",
+    "isOneDrive": true
+  },
+  "oneDriveWarning": true,
+  "summary": {
+    "exists": true,
+    "fromHistory": false,
+    "plainEnglish": "Project “NTTC-Stage13-Disposable”: This appears to be a node app. Detected tech signals include Node, src/ layout. Important folders found: src. Important files noted: package.json, README.md. No package scripts were confirmed. README first",
+    "skippedLinks": 1,
+    "skippedLinkNames": [
+      "junction-docs"
+    ],
+    "inspected": [
+      "package.json",
+      "README.md"
+    ],
+    "hasEnvInInspected": false,
+    "markdownHasSecretToken": false,
+    "markdownHasRawSource": false
+  },
+  "reviewPack": {
+    "exists": true,
+    "startsOk": true,
+    "hasInspectOnly": true,
+    "hasLifecycleSection": true,
+    "hasLiveQwenDisabled": true,
+    "excerpt": "# New Type Tech Coder - Copy-Paste Review Report\n\n## Reviewer Role\n\nYou are reviewing a local non-coder AI development workbench called New Type Tech Coder.\nFocus on safety, missing risks, unclear ass"
+  },
+  "checkpoint": {
+    "exists": true,
+    "method": "folder-snapshot",
+    "methodLabel": "App-managed folder snapshot",
+    "skippedCount": 2,
+    "snapshotDir": "C:\\Users\\Justin Mallory\\AppData\\Roaming\\New Type Tech Coder\\checkpoints\\1783593419507-xbaxgq",
+    "warnings": [
+      "Selected folder is not a Git repository, so a folder snapshot was used.",
+      "Used an app-managed folder snapshot because Git checkpointing was unavailable or refused.",
+      "Denied/secret/build folders were excluded from the snapshot.",
+      "Symlinks and junctions were not followed or copied.",
+      "Skipped 1 symlink/junction item(s) during safety backup (not copied)."
+    ],
+    "status": "Saved a local backup copy of safe project files in New Type Tech Coder’s app storage. This is not a Git commit and was not uploaded anywhere."
+  },
+  "restore": {
+    "status": "Restored project to checkpoint from 7/9/2026, 3:36:59 AM.",
+    "ok": true,
+    "markerRemoved": true,
+    "latestMethod": "folder-snapshot"
+  },
+  "safeChecks": {
+    "lastStatus": "blocked",
+    "lastSummary": "No “build” safe check is available. Summarize Project first, or the script is missing.",
+    "available": []
+  },
+  "lifecycleBlock": {
+    "hooks": [],
+    "buildBlocked": false,
+    "buildReason": null
+  },
+  "advisor": {
+    "ready": true,
+    "hasResponse": false,
+    "status": "Local AI request failed with HTTP 404. {\"error\":\"model 'qwen2.5-coder' not found\"}",
+    "responsePreview": ""
+  },
+  "qwen": {
+    "liveEnabled": false,
+    "promptExists": true,
+    "promptInspectOnly": true,
+    "hasSecret": false,
+    "disabledReason": "Live Qwen is disabled for safety. Use Generate Qwen Inspect Prompt and paste it into Qwen Code yourself."
+  },
+  "external": {
+    "saved": true,
+    "risky": true,
+    "phrases": [
+      "rm -rf",
+      "deploy"
+    ],
+    "status": "External Review saved with risk warnings. Treat it as advice only."
+  },
+  "history": {
+    "userDataFileExists": true,
+    "userDataPath": "C:\\Users\\Justin Mallory\\AppData\\Roaming\\New Type Tech Coder\\history\\session-history.json",
+    "projectFolderHasHistory": false,
+    "recentCount": 1,
+    "currentExists": true
+  },
+  "failures": [
+    "Expected build to be lifecycle-hook blocked",
+    "Local AI failed: Local AI request failed with HTTP 404. {\"error\":\"model 'qwen2.5-coder' not found\"}"
+  ],
+  "notes": [
+    "Lint not available after detection"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "terminalMentions": [
+    "y allowlisted build/test scripts from your project. What it does not do: open a terminal or accept custom commands. Why it is safe: you click and confirm each check — n",
+    "Do not assume the app can edit files, run arbitrary terminals, or enable Qwen live file edits yet.",
+    "arer wording for non-coders. Inspect-only: no edits, no live Qwen, no arbitrary terminal, no custom commands. Safety over speed."
+  ],
+  "apiKeys": [
+    "askLocalAi",
+    "cancelSafeCheck",
+    "checkPath",
+    "clearExternalReview",
+    "clearProject",
+    "clearProjectHistory",
+    "clearRecentProjects",
+    "createCheckpoint",
+    "generateQwenPromptPack",
+    "generateReviewPack",
+    "getSnapshot",
+    "logPlaceholderAction",
+    "onSnapshotUpdated",
+    "openRecentProject",
+    "recordCopyAdvisorResponse",
+    "recordCopyCommandOutput",
+    "recordCopyExternalReview",
+    "recordCopyQwenPromptPack",
+    "recordCopyQwenReport",
+    "recordCopyReviewPack",
+    "recordCopySummary",
+    "runSafeCheck",
+    "saveExternalReview",
+    "saveSessionHistory",
+    "selectProjectFolder",
+    "setExternalReviewDraft",
+    "setExternalReviewSource",
+    "setUserRequest",
+    "summarizeProject",
+    "testProviderConnection",
+    "testQwenCli",
+    "undoLastCheckpoint",
+    "updateProviderSettings"
+  ],
+  "dangerousApi": [],
+  "safety": {
+    "initialized": true,
+    "mode": "inspect-only",
+    "project": {
+      "rootPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage13-Disposable",
+      "displayName": "NTTC-Stage13-Disposable",
+      "normalizedPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage13-Disposable",
+      "isOneDrive": true
+    },
+    "writesAllowed": false,
+    "editModeAvailable": false,
+    "checkpointExists": false,
+    "denyListSummary": [
+      "node_modules and dependency caches",
+      ".git internals",
+      ".env and secret/key files",
+      "system directories (Windows, Program Files, etc.)",
+      "build output folders (dist, build, out, .next)",
+      "package lock files (presence only; contents not read)"
+    ]
+  },
+  "qwenLive": false,
+  "qwenReason": "Live Qwen is disabled for safety. Use Generate Qwen Inspect Prompt and paste it into Qwen Code yourself."
+}

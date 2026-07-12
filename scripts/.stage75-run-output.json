@@ -1,0 +1,197 @@
+﻿{
+  "mode": "run",
+  "disposablePath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage75-Disposable",
+  "packagedAppPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\New Type Tech Coder\\release\\win-unpacked\\New Type Tech Coder.exe",
+  "launcherPath": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\New Type Tech Coder\\Open New Type Tech Coder.bat",
+  "failures": [],
+  "usability": [
+    {
+      "category": "Usability friction",
+      "msg": "Ollama unavailable ΓÇö live Code AI and Patch Draft steps skipped; offline state should be clear to user."
+    }
+  ],
+  "projectSetup": {
+    "isGit": true,
+    "packageScripts": [],
+    "hasSafetyBackupFeature": true,
+    "path": "C:\\Users\\Justin Mallory\\OneDrive\\Desktop\\NTTC-Stage75-Disposable",
+    "fingerprintCount": 5,
+    "fingerprintSample": [
+      "package.json",
+      "README.md",
+      "src/App.ts",
+      "src/utils/formatStatus.ts",
+      "tsconfig.json"
+    ],
+    "summaryGenerated": true,
+    "projectPath": null
+  },
+  "launcher": {
+    "batExists": true,
+    "exeExists": true,
+    "note": "Launcher opens packaged exe ΓÇö verified by file presence; manual double-click recommended for final UX."
+  },
+  "packagedApp": {
+    "pageUrl": "file:///C:/Users/Justin%20Mallory/OneDrive/Desktop/New%20Type%20Tech%20Coder/release/win-unpacked/resources/app.asar/dist/index.html",
+    "usesAsarFileProtocol": true,
+    "usesViteDev": false
+  },
+  "shellBadges": {
+    "inspectOnly": true,
+    "liveQwenDisabled": true,
+    "ollamaBubble": true,
+    "noApplyPatchButton": true,
+    "noEditModeButton": true,
+    "noTts": true,
+    "noCustomCmd": true
+  },
+  "safetyBackup": {
+    "available": true,
+    "created": false,
+    "label": null,
+    "actionLogged": true,
+    "verifyResult": null
+  },
+  "codeContextPack": {
+    "selectedFiles": 2,
+    "previewOnly": false,
+    "hasBlockedList": false,
+    "capped": true,
+    "canCopy": true,
+    "noAutoAi": true,
+    "packGenerated": true,
+    "secretNote": null
+  },
+  "ollama": {
+    "bubbleVisible": true,
+    "connectionState": "active",
+    "connected": false,
+    "active": false,
+    "model": "qwen3:30b-a3b"
+  },
+  "codeAi": {
+    "skipped": true,
+    "reason": "Ollama not ready",
+    "offlineClear": false
+  },
+  "patchDraft": {
+    "skipped": true,
+    "reason": "Ollama not ready"
+  },
+  "manualImport": {
+    "sampleSaved": true,
+    "metadata": {
+      "source": "Cursor",
+      "draftType": "Patch draft",
+      "riskPhrases": [
+        "apply patch",
+        "edit mode",
+        "command runner"
+      ]
+    },
+    "noAutoAi": false,
+    "riskyPhraseWarnings": true,
+    "secretBlockedWithoutOverride": false,
+    "secretSaveWithOverride": true
+  },
+  "patchDraftSafetyReview": {
+    "generated": true,
+    "targetClear": false,
+    "ruleBased": true,
+    "recommendation": "Do not proceed yet",
+    "noSourceChange": true
+  },
+  "externalComparison": {
+    "generated": true,
+    "riskLevel": "Blocked / Do not proceed",
+    "hasAgreement": true,
+    "hasConflict": true,
+    "hasArchitecture": true,
+    "hasNextPrompt": true,
+    "noAiCall": true,
+    "noSourceChange": true
+  },
+  "builderHandoff": {
+    "conservativeCursor": {
+      "saved": true,
+      "sectionCount": 13,
+      "textOnly": true,
+      "noExternalConnection": true
+    },
+    "targets": {
+      "generic-builder/conservative": {
+        "saved": true,
+        "hasPurpose": true,
+        "hasSafetyReminder": true
+      },
+      "claude/conservative": {
+        "saved": true,
+        "hasPurpose": true,
+        "hasSafetyReminder": true
+      },
+      "human-programmer/conservative": {
+        "saved": true,
+        "hasPurpose": true,
+        "hasSafetyReminder": true
+      },
+      "cursor/fast-small-patch": {
+        "saved": true,
+        "hasPurpose": true,
+        "hasSafetyReminder": true
+      }
+    }
+  },
+  "decisionReviewMemory": {
+    "decisionHasImport": true,
+    "decisionHasComparison": true,
+    "decisionHasHandoff": true,
+    "reviewHasSections": true,
+    "builderPromptGenerated": true,
+    "memoryPreviewOnly": true,
+    "memoryNoAutoWrite": true,
+    "planningStyleInMemory": true,
+    "memoryExport": {
+      "saved": false,
+      "nttcFiles": [
+        "NTTC_CONTEXT.md",
+        "NTTC_DONE.md",
+        "NTTC_PLAN.md",
+        "NTTC_REVIEW_HANDOFF.md",
+        "NTTC_THREAD_EXPORT.md"
+      ],
+      "onlyNttcMd": true
+    }
+  },
+  "finalFingerprints": {
+    "changed": [],
+    "added": [],
+    "removed": [],
+    "sourceUnchanged": true,
+    "nttcOnlyWrites": false
+  },
+  "dailyNextAction": {
+    "title": "Run Build/Test Checks",
+    "reason": "Allowlisted Build/Test Checks appear available, but none have been run this session."
+  },
+  "pass": true,
+  "recommendedNextStage": "another workflow QA stage",
+  "confirmations": {
+    "noSourceEditing": true,
+    "noAiSourceEditing": true,
+    "noInvisibleAiFileAccess": true,
+    "aiCannotBrowseProject": true,
+    "aiCannotRunCommands": true,
+    "noArbitraryTerminal": true,
+    "noCustomCommandTyping": true,
+    "liveQwenDisabled": true,
+    "noAudioTts": true,
+    "noApplyPatchButton": true,
+    "nttcDoesNotModifySource": true,
+    "aiCallsAfterConfirmation": true,
+    "importedDraftsNotAutoSentToAi": false,
+    "comparisonRuleBasedOnly": true,
+    "handoffTextOnly": true,
+    "projectMemoryExplicitExport": true,
+    "historyRestoreWorks": "pending restore phase"
+  }
+}

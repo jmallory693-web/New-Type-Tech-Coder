@@ -1,0 +1,14 @@
+{
+  "name": "new-type-tech-coder",
+  "version": "0.1.0",
+  "description": "Plain-English control panel for local AI coding agents",
+  "main": "dist-electron/main/index.js",
+  "author": "New Type Tech",
+  "license": "UNLICENSED",
+  "private": true,
+  "productName": "New Type Tech Coder",
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
