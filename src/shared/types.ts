@@ -1993,6 +1993,8 @@ export interface ProjectHistoryRecord {
   changedFilesTaskLink: ChangedFilesTaskLinkRecord | null;
   changedFilesTaskLinkSelectedTaskId: string | null;
   architectureHealth: ArchitectureHealthRecord | null;
+  /** Stage 119: Safe Scaffold target folder readiness metadata only. */
+  safeScaffoldTarget: import("./buildModeTargetSafety").SafeScaffoldTargetRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2076,6 +2078,8 @@ export interface AppSnapshot {
   reportsUi: ReportsUiState;
   /** Stage 98: Architecture Health / Monolith Risk Report (metadata only). */
   architectureHealth: ArchitectureHealthState;
+  /** Stage 119: Safe Scaffold target-folder readiness (metadata only; no writes). */
+  safeScaffoldTarget: import("./buildModeTargetSafety").SafeScaffoldTargetState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2314,6 +2318,9 @@ export const IPC_CHANNELS = {
     "nttc:mark-architecture-refactor-task-implementation-reviewed",
   stageArchitectureRefactorTaskImplementationReportForReview:
     "nttc:stage-architecture-refactor-task-implementation-report-for-review",
+  selectSafeScaffoldTargetFolder: "nttc:select-safe-scaffold-target-folder",
+  clearSafeScaffoldTargetFolder: "nttc:clear-safe-scaffold-target-folder",
+  refreshSafeScaffoldTargetSafety: "nttc:refresh-safe-scaffold-target-safety",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2572,6 +2579,9 @@ export interface NttcApi {
     confirmWithoutReview?: boolean,
   ) => Promise<AppSnapshot>;
   stageArchitectureRefactorTaskImplementationReportForReview: () => Promise<AppSnapshot>;
+  selectSafeScaffoldTargetFolder: () => Promise<AppSnapshot>;
+  clearSafeScaffoldTargetFolder: () => Promise<AppSnapshot>;
+  refreshSafeScaffoldTargetSafety: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,

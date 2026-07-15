@@ -248,6 +248,9 @@ const IPC_CHANNELS = {
     "nttc:mark-architecture-refactor-task-implementation-reviewed",
   stageArchitectureRefactorTaskImplementationReportForReview:
     "nttc:stage-architecture-refactor-task-implementation-report-for-review",
+  selectSafeScaffoldTargetFolder: "nttc:select-safe-scaffold-target-folder",
+  clearSafeScaffoldTargetFolder: "nttc:clear-safe-scaffold-target-folder",
+  refreshSafeScaffoldTargetSafety: "nttc:refresh-safe-scaffold-target-safety",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -976,6 +979,15 @@ const api: NttcApi = {
     ipcRenderer.invoke(
       IPC_CHANNELS.stageArchitectureRefactorTaskImplementationReportForReview,
     ),
+
+  selectSafeScaffoldTargetFolder: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.selectSafeScaffoldTargetFolder),
+
+  clearSafeScaffoldTargetFolder: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearSafeScaffoldTargetFolder),
+
+  refreshSafeScaffoldTargetSafety: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.refreshSafeScaffoldTargetSafety),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,

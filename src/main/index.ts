@@ -53,6 +53,7 @@ import {
 } from "./planning/TaskArtifactIndexManager";
 import { ChangedFilesTaskLinkManager } from "./planning/ChangedFilesTaskLinkManager";
 import { ArchitectureHealthManager } from "./architecture/ArchitectureHealthManager";
+import { SafeScaffoldTargetManager } from "./buildMode/SafeScaffoldTargetManager";
 import { ArchitectureRefactorTaskCardsManager } from "./architecture/ArchitectureRefactorTaskCardsManager";
 import { ArchitectureRefactorTaskBuilderHandoffManager } from "./architecture/ArchitectureRefactorTaskBuilderHandoffManager";
 import { ArchitectureRefactorTaskImplementationIntakeManager } from "./architecture/ArchitectureRefactorTaskImplementationIntakeManager";
@@ -176,6 +177,7 @@ const blueprintTaskReconciliationManager = new BlueprintTaskReconciliationManage
 const taskArtifactIndexManager = new TaskArtifactIndexManager(safetyGate);
 const changedFilesTaskLinkManager = new ChangedFilesTaskLinkManager(safetyGate);
 const architectureHealthManager = new ArchitectureHealthManager(safetyGate);
+const safeScaffoldTargetManager = new SafeScaffoldTargetManager(safetyGate);
 const architectureRefactorTaskCardsManager =
   new ArchitectureRefactorTaskCardsManager(safetyGate);
 const architectureRefactorTaskBuilderHandoffManager =
@@ -456,6 +458,7 @@ function getProjectMemoryInput() {
       externalPatchDraftComparisonManager.getSaved(),
     builderHandoffExport: builderHandoffExportManager.getSaved(),
     architectureHealth: architectureHealthManager.getSaved(),
+    safeScaffoldTarget: safeScaffoldTargetManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -522,6 +525,7 @@ function getBlueprintPersistenceFields() {
     changedFilesTaskLinkSelectedTaskId:
       changedFilesTaskLinkManager.getSelectedTaskId(),
     architectureHealth: architectureHealthManager.getSaved(),
+    safeScaffoldTarget: safeScaffoldTargetManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -782,6 +786,7 @@ function buildSnapshot(): AppSnapshot {
     planningStyle: planningStyleManager.getState(),
     reportsUi: { panelCollapse: reportsUiManager.getPanelCollapse() },
     architectureHealth: architectureHealthManager.getState(),
+    safeScaffoldTarget: safeScaffoldTargetManager.getState(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getState(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getState(),
@@ -817,6 +822,7 @@ function runProjectSummary(): AppSnapshot {
     summaryIsFromHistory = false;
     architectureHealthManager.markStale("Project summary re-scanned.");
     architectureRefactorTaskCardsManager.markStale("Project summary re-scanned.");
+    safeScaffoldTargetManager.markStale("Project summary re-scanned.");
     architectureRefactorTaskBuilderHandoffManager.markStale(
       "Project summary re-scanned.",
     );
@@ -968,6 +974,7 @@ function resetSessionForProjectChange(): void {
   taskArtifactIndexManager.clearForProjectChange();
   changedFilesTaskLinkManager.clearForProjectChange();
   architectureHealthManager.clearForProjectChange();
+  safeScaffoldTargetManager.clearForProjectChange();
   architectureRefactorTaskCardsManager.clearForProjectChange();
   architectureRefactorTaskBuilderHandoffManager.clearForProjectChange();
   architectureRefactorTaskImplementationIntakeManager.clearForProjectChange();
@@ -1133,6 +1140,7 @@ function openProjectPath(
         saved.changedFilesTaskLinkSelectedTaskId ?? null,
       );
       architectureHealthManager.restoreSaved(saved.architectureHealth ?? null);
+      safeScaffoldTargetManager.restoreSaved(saved.safeScaffoldTarget ?? null);
       architectureRefactorTaskCardsManager.restoreSaved(
         saved.architectureRefactorTaskCards ?? null,
       );
@@ -4770,6 +4778,48 @@ function registerIpc(): void {
       return buildSnapshot();
     },
   );
+
+  ipcMain.handle(IPC_CHANNELS.selectSafeScaffoldTargetFolder, async () => {
+    if (!mainWindow) {
+      return buildSnapshot();
+    }
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Select Safe Scaffold Target Folder",
+      properties: ["openDirectory"],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      safetyGate.log(
+        "info",
+        "Safe Scaffold target folder picker canceled",
+        "No target folder was selected.",
+      );
+      broadcastSnapshot();
+      return buildSnapshot();
+    }
+
+    const projectRoot = safetyGate.getProject()?.normalizedPath ?? null;
+    safeScaffoldTargetManager.setTargetPath(result.filePaths[0], projectRoot);
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.clearSafeScaffoldTargetFolder, () => {
+    safeScaffoldTargetManager.clearTarget();
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.refreshSafeScaffoldTargetSafety, () => {
+    const projectRoot = safetyGate.getProject()?.normalizedPath ?? null;
+    safeScaffoldTargetManager.refreshCheck(projectRoot);
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
 
   ipcMain.handle(IPC_CHANNELS.setPlanningStyle, (_event, style) => {
     planningStyleManager.setStyle(style);

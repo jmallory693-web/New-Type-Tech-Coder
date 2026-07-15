@@ -104,6 +104,10 @@ export interface WorkflowGuidanceInput {
     changedFilesTaskLinkScopeWarningCount?: number;
     changedFilesUnlinked?: boolean;
   } | null;
+  /** Stage 119: Safe Scaffold target-folder readiness. */
+  safeScaffoldTargetSelected?: boolean;
+  safeScaffoldTargetStale?: boolean;
+  safeScaffoldTargetStatus?: "safe" | "caution" | "blocked" | null;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -229,6 +233,15 @@ function isCompleted(
           !input.blueprintStatus?.changedFilesTaskLinkStale &&
           (input.blueprintStatus.changedFilesTaskLinkScopeWarningCount ?? 0) === 0,
       );
+    case "build-mode-safety-charter":
+      // Stage 117: charter always present as planning-only UI (no write capability).
+      return true;
+    case "build-mode-target-folder":
+      return Boolean(
+        input.safeScaffoldTargetSelected &&
+          !input.safeScaffoldTargetStale &&
+          input.safeScaffoldTargetStatus === "safe",
+      );
     default:
       return false;
   }
@@ -265,6 +278,12 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "resolve-stale-task-artifacts": "blueprint-task-artifact-index",
     "link-changed-files-to-task": "changed-files-task-link",
     "review-changed-files-scope-warnings": "changed-files-task-link",
+    "open-build-mode": "build-mode-safety-charter",
+    "create-blueprint-before-scaffold": "blueprint-idea",
+    "build-mode-planning-only": "build-mode-safety-charter",
+    "select-safe-scaffold-target-folder": "build-mode-target-folder",
+    "choose-empty-scaffold-target-folder": "build-mode-target-folder",
+    "safe-scaffold-target-ready": "build-mode-target-folder",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -401,6 +420,16 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
       return input.projectMemoryLastSaved
         ? `Saved ${input.projectMemoryLastSaved.savedAt}.`
         : "Explicitly save `.nttc/` markdown when ready.";
+    case "build-mode-safety-charter":
+      return "Planning Only — Safe Scaffold Mode is not active; no file writes.";
+    case "build-mode-target-folder":
+      if (!input.safeScaffoldTargetSelected) {
+        return "Select a Safe Scaffold target folder (metadata check only).";
+      }
+      if (input.safeScaffoldTargetStale || !input.safeScaffoldTargetStatus) {
+        return "Target folder selected — refresh safety check.";
+      }
+      return `Folder safety: ${input.safeScaffoldTargetStatus} — writes still not allowed.`;
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -556,6 +585,16 @@ export function buildWorkflowProgress(
       id: "project-memory-export",
       label: "Project Memory Export",
       focusId: "project-memory",
+    },
+    {
+      id: "build-mode-safety-charter",
+      label: "Build Mode Safety Charter",
+      focusId: "build-mode-safety-charter",
+    },
+    {
+      id: "build-mode-target-folder",
+      label: "Safe Scaffold Target Folder",
+      focusId: "build-mode-target-folder",
     },
   ];
 

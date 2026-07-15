@@ -81,6 +81,12 @@ export type DailyNextActionKind =
   | "paste-architecture-refactor-implementation-report"
   | "mark-architecture-refactor-implementation-returned"
   | "wait-for-refactor-builder-report"
+  | "open-build-mode"
+  | "create-blueprint-before-scaffold"
+  | "build-mode-planning-only"
+  | "select-safe-scaffold-target-folder"
+  | "choose-empty-scaffold-target-folder"
+  | "safe-scaffold-target-ready"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -174,6 +180,10 @@ export interface DailyNextActionInput {
     changedFilesTaskLinkScopeWarningCount?: number;
     changedFilesUnlinked?: boolean;
   } | null;
+  /** Stage 119: Safe Scaffold target-folder readiness (low priority). */
+  safeScaffoldTargetSelected?: boolean;
+  safeScaffoldTargetStale?: boolean;
+  safeScaffoldTargetStatus?: "safe" | "caution" | "blocked" | null;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -310,6 +320,18 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
     "Marks the refactor task Implementation Returned after reviewing the pasted report.",
   "wait-for-refactor-builder-report":
     "Waits for the outside builder to return an implementation report for review.",
+  "open-build-mode":
+    "Opens the Build tab Safety Charter (planning-only — no file writes).",
+  "create-blueprint-before-scaffold":
+    "Opens Blueprint so you can create or import a plan before any future Safe Scaffold work.",
+  "build-mode-planning-only":
+    "Opens Build Mode to review the planning-only charter.",
+  "select-safe-scaffold-target-folder":
+    "Opens Build Mode to select a Safe Scaffold target folder (safety check only).",
+  "choose-empty-scaffold-target-folder":
+    "Opens Build Mode so you can choose an empty folder outside the current project.",
+  "safe-scaffold-target-ready":
+    "Opens Build Mode. Target folder is safe; scaffold file-tree preview comes in a later stage.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1641,6 +1663,68 @@ export function calculateDailyNextAction(
       `${why} Generate a preview, review it, then save documentation-only markdown files.`,
       button("Export Project Memory", "export-project-memory", "navigate"),
       button("Open Reports", "generate-review-pack", "navigate"),
+      freshness,
+    );
+  }
+
+  // Stage 117/119: low-priority Build Mode readiness hints (never override safety/review paths above).
+  if (!bp?.blueprintImported) {
+    return make(
+      "create-blueprint-before-scaffold",
+      "Create or import a Blueprint before Safe Scaffold Mode",
+      "Build Mode is planning-only. Create or import a Blueprint before any future Safe Scaffold work.",
+      button("Open Blueprint Tab", "open-blueprint", "navigate"),
+      button("Open Build Tab", "open-build-mode", "navigate"),
+      freshness,
+    );
+  }
+  if (bp.blueprintImported && bp.taskCardsExist) {
+    const targetSelected = Boolean(input.safeScaffoldTargetSelected);
+    const targetStale = Boolean(input.safeScaffoldTargetStale);
+    const targetStatus = input.safeScaffoldTargetStatus ?? null;
+
+    if (!targetSelected || targetStale || !targetStatus) {
+      return make(
+        "select-safe-scaffold-target-folder",
+        "Select a Safe Scaffold target folder",
+        "Blueprint and task cards exist. Select a Safe Scaffold target folder.",
+        button("Open Build Tab", "select-safe-scaffold-target-folder", "navigate"),
+        button("Open Blueprint Tab", "open-blueprint", "navigate"),
+        freshness,
+      );
+    }
+    if (targetStatus === "blocked" || targetStatus === "caution") {
+      return make(
+        "choose-empty-scaffold-target-folder",
+        "Choose an empty folder outside the current project",
+        targetStatus === "blocked"
+          ? "The selected Safe Scaffold target folder is blocked. Choose an empty folder outside the current project."
+          : "The selected Safe Scaffold target folder is Caution. Prefer an empty folder outside the current project.",
+        button(
+          "Open Build Tab",
+          "choose-empty-scaffold-target-folder",
+          "navigate",
+        ),
+        button("Open Blueprint Tab", "open-blueprint", "navigate"),
+        freshness,
+      );
+    }
+    if (targetStatus === "safe") {
+      return make(
+        "safe-scaffold-target-ready",
+        "Target folder is safe",
+        "Target folder is safe. Next stage is scaffold file-tree preview.",
+        button("Open Build Tab", "safe-scaffold-target-ready", "navigate"),
+        button("Open Blueprint Tab", "open-blueprint", "navigate"),
+        freshness,
+      );
+    }
+    return make(
+      "build-mode-planning-only",
+      "Build Mode is planning-only",
+      "Build Mode remains planning-only. Review target folder readiness on the Build tab.",
+      button("Open Build Tab", "open-build-mode", "navigate"),
+      button("Open Blueprint Tab", "open-blueprint", "navigate"),
       freshness,
     );
   }
