@@ -91,7 +91,8 @@ import {
 import { WorkflowGuidancePanel } from "./components/WorkflowGuidancePanel";
 import { ReportsWorkflowSection } from "./components/ReportsWorkflowSection";
 import { QuickStartGuidePanel } from "./components/QuickStartGuidePanel";
-import { BlueprintPlannerPanel } from "./components/BlueprintPlannerPanel";
+import { BlueprintTabSection } from "./components/BlueprintTabSection";
+import { buildBlueprintTabSectionProps } from "./components/blueprintTabSectionProps";
 import { ChangedFilesTaskLinkPanel } from "./components/ChangedFilesTaskLinkPanel";
 import { ReportsArchitectureSection } from "./components/ReportsArchitectureSection";
 import { buildReportsArchitectureSectionProps } from "./components/reportsArchitectureSectionProps";
@@ -9599,166 +9600,91 @@ export function App() {
         ) : null}
 
         {activeTab === "blueprint" ? (
-          <div className="tab-panel" role="tabpanel" aria-label="Blueprint">
-            <section className="panel">
-              <div className="panel-header">
-                <h2 className="panel-title">Project Blueprint Planner</h2>
-                <p className="panel-subtitle">
-                  Build from idea — planning documents only, no source code or
-                  scaffolding.
-                </p>
-              </div>
-              <div className="panel-body">
+          <BlueprintTabSection
+            {...buildBlueprintTabSectionProps({
+              blueprint,
+              hasProject,
+              localAiProgressBanner: (
                 <LocalAiProgressBanner
                   progress={localAiProgress}
                   mode="blueprint-planner"
                 />
-                <BlueprintPlannerPanel
-                  blueprint={blueprint}
-                  projectSelected={hasProject}
-                  onIntakeChange={(patch) => void handleBlueprintIntakeChange(patch)}
-                  onGenerateQuestions={() =>
-                    void handleGenerateBlueprintPlannerQuestions()
-                  }
-                  onCopyQuestions={() =>
-                    void handleCopyBlueprintPlannerQuestions()
-                  }
-                  onGeneratePrompt={() =>
-                    void handleGenerateBlueprintPlannerPrompt()
-                  }
-                  onCopyPrompt={() => void handleCopyBlueprintPlannerPrompt()}
-                  onAskLocalPlannerAi={() => void handleAskLocalPlannerAi()}
-                  onCopyLocalPlannerDraft={() =>
-                    void handleCopyBlueprintPlannerAiDraft()
-                  }
-                  onSaveLocalDraftAsBlueprint={() =>
-                    void handleSaveBlueprintPlannerDraftAsImported()
-                  }
-                  onDraftSourceChange={(source) =>
-                    void handleBlueprintDraftSourceChange(source)
-                  }
-                  onDraftTextChange={(text) =>
-                    void handleBlueprintDraftTextChange(text)
-                  }
-                  onSaveImported={() => void handleSaveImportedBlueprint()}
-                  onClearImported={() => void handleClearImportedBlueprint()}
-                  onCopyImported={() => void handleCopyImportedBlueprint()}
-                  onCheckCompleteness={() =>
-                    void handleCheckBlueprintCompleteness()
-                  }
-                  onPreviewPlanningDocs={() =>
-                    void handlePreviewBlueprintPlanningDocuments()
-                  }
-                  onSavePlanningDocs={() =>
-                    void handleSaveBlueprintPlanningDocuments(false)
-                  }
-                  onConfirmOverwritePlanningDocs={() =>
-                    void handleSaveBlueprintPlanningDocuments(true)
-                  }
-                  onGeneratePhase1Handoff={() =>
-                    void handleGenerateBlueprintPhase1Handoff()
-                  }
-                  onCopyPhase1Handoff={() =>
-                    void handleCopyBlueprintPhase1Handoff()
-                  }
-                  onGeneratePhaseTaskCards={() =>
-                    void handleGenerateBlueprintPhaseTaskCards()
-                  }
-                  onCopyAllPhaseTaskCards={() =>
-                    void handleCopyAllBlueprintPhaseTaskCards()
-                  }
-                  onClearPhaseTaskCards={() =>
-                    void handleClearBlueprintPhaseTaskCards()
-                  }
-                  onCopyPhaseTaskCard={(taskId) =>
-                    void handleCopyBlueprintPhaseTaskCard(taskId)
-                  }
-                  onSetPhaseTaskCardStatus={(taskId, status) =>
-                    void handleSetBlueprintPhaseTaskCardStatus(taskId, status)
-                  }
-                  onResetPhaseTaskCardStatus={(taskId) =>
-                    void handleResetBlueprintPhaseTaskCardStatus(taskId)
-                  }
-                  onSetActivePhaseTaskCard={(taskId) =>
-                    void handleSetActiveBlueprintPhaseTaskCard(taskId)
-                  }
-                  onTaskHandoffSelectedTaskChange={(taskId) =>
-                    void handleTaskHandoffSelectedTaskChange(taskId)
-                  }
-                  onTaskHandoffTargetChange={(target) =>
-                    void handleTaskHandoffTargetChange(target)
-                  }
-                  onTaskHandoffStrictnessChange={(strictness) =>
-                    void handleTaskHandoffStrictnessChange(strictness)
-                  }
-                  onGenerateTaskBuilderHandoff={() =>
-                    void handleGenerateTaskCardBuilderHandoff()
-                  }
-                  onCopyTaskBuilderHandoff={() =>
-                    void handleCopyTaskCardBuilderHandoff()
-                  }
-                  onClearTaskBuilderHandoff={() =>
-                    void handleClearTaskCardBuilderHandoff()
-                  }
-                  onTaskImplSelectedTaskChange={(taskId) =>
-                    void handleTaskImplSelectedTaskChange(taskId)
-                  }
-                  onTaskImplBuilderSourceChange={(source) =>
-                    void handleTaskImplBuilderSourceChange(source)
-                  }
-                  onTaskImplDraftChange={handleTaskImplDraftChange}
-                  onSaveTaskImplementationReport={() =>
-                    void handleSaveTaskImplementationReport()
-                  }
-                  onCopyTaskImplementationReport={() =>
-                    void handleCopyTaskImplementationReport()
-                  }
-                  onClearTaskImplementationReport={() =>
-                    void handleClearTaskImplementationReport()
-                  }
-                  onMarkTaskImplementationReturned={() =>
-                    void handleMarkTaskImplementationReturned()
-                  }
-                  onMarkTaskReviewed={() => void handleMarkTaskReviewed()}
-                  onStageTaskImplementationReportForReview={() =>
-                    void handleStageTaskImplementationReportForReview()
-                  }
-                  onGenerateBlueprintTaskReconciliation={() =>
-                    void handleGenerateBlueprintTaskReconciliation()
-                  }
-                  onCopyBlueprintTaskReconciliation={() =>
-                    void handleCopyBlueprintTaskReconciliation()
-                  }
-                  onClearBlueprintTaskReconciliation={() =>
-                    void handleClearBlueprintTaskReconciliation()
-                  }
-                  onGenerateTaskArtifactIndex={() =>
-                    void handleGenerateTaskArtifactIndex()
-                  }
-                  onCopyTaskArtifactIndex={() => void handleCopyTaskArtifactIndex()}
-                  onClearTaskArtifactIndex={() => void handleClearTaskArtifactIndex()}
-                  onTaskArtifactIndexFilterChange={(taskId) =>
-                    void handleTaskArtifactIndexFilterChange(taskId)
-                  }
-                  onSelectPreviewFile={(fileName) =>
-                    void handleBlueprintPreviewFileSelect(fileName)
-                  }
-                  questionsCopyState={blueprintQuestionsCopyState}
-                  promptCopyState={blueprintPromptCopyState}
-                  localPlannerCopyState={blueprintLocalPlannerCopyState}
-                  importedCopyState={blueprintImportedCopyState}
-                  phase1CopyState={blueprintPhase1CopyState}
-                  phaseTaskCardsCopyAllState={blueprintPhaseTaskCardsCopyAllState}
-                  phaseTaskCardCopyState={blueprintPhaseTaskCardCopyState}
-                  taskBuilderHandoffCopyState={taskBuilderHandoffCopyState}
-                  taskImplementationIntakeCopyState={taskImplementationIntakeCopyState}
-                  taskImplementationIntakeDraft={taskImplementationIntakeDraft}
-                  taskReconciliationCopyState={taskReconciliationCopyState}
-                  taskArtifactIndexCopyState={taskArtifactIndexCopyState}
-                />
-              </div>
-            </section>
-          </div>
+              ),
+              blueprintQuestionsCopyState,
+              blueprintPromptCopyState,
+              blueprintLocalPlannerCopyState,
+              blueprintImportedCopyState,
+              blueprintPhase1CopyState,
+              blueprintPhaseTaskCardsCopyAllState,
+              blueprintPhaseTaskCardCopyState,
+              taskBuilderHandoffCopyState,
+              taskImplementationIntakeCopyState,
+              taskImplementationIntakeDraft,
+              taskReconciliationCopyState,
+              taskArtifactIndexCopyState,
+              handlers: {
+                blueprintIntakeChange: handleBlueprintIntakeChange,
+                generateBlueprintPlannerQuestions:
+                  handleGenerateBlueprintPlannerQuestions,
+                copyBlueprintPlannerQuestions: handleCopyBlueprintPlannerQuestions,
+                generateBlueprintPlannerPrompt: handleGenerateBlueprintPlannerPrompt,
+                copyBlueprintPlannerPrompt: handleCopyBlueprintPlannerPrompt,
+                askLocalPlannerAi: handleAskLocalPlannerAi,
+                copyBlueprintPlannerAiDraft: handleCopyBlueprintPlannerAiDraft,
+                saveBlueprintPlannerDraftAsImported:
+                  handleSaveBlueprintPlannerDraftAsImported,
+                blueprintDraftSourceChange: handleBlueprintDraftSourceChange,
+                blueprintDraftTextChange: handleBlueprintDraftTextChange,
+                saveImportedBlueprint: handleSaveImportedBlueprint,
+                clearImportedBlueprint: handleClearImportedBlueprint,
+                copyImportedBlueprint: handleCopyImportedBlueprint,
+                checkBlueprintCompleteness: handleCheckBlueprintCompleteness,
+                previewBlueprintPlanningDocuments:
+                  handlePreviewBlueprintPlanningDocuments,
+                saveBlueprintPlanningDocuments: handleSaveBlueprintPlanningDocuments,
+                generateBlueprintPhase1Handoff: handleGenerateBlueprintPhase1Handoff,
+                copyBlueprintPhase1Handoff: handleCopyBlueprintPhase1Handoff,
+                generateBlueprintPhaseTaskCards:
+                  handleGenerateBlueprintPhaseTaskCards,
+                copyAllBlueprintPhaseTaskCards: handleCopyAllBlueprintPhaseTaskCards,
+                clearBlueprintPhaseTaskCards: handleClearBlueprintPhaseTaskCards,
+                copyBlueprintPhaseTaskCard: handleCopyBlueprintPhaseTaskCard,
+                setBlueprintPhaseTaskCardStatus:
+                  handleSetBlueprintPhaseTaskCardStatus,
+                resetBlueprintPhaseTaskCardStatus:
+                  handleResetBlueprintPhaseTaskCardStatus,
+                setActiveBlueprintPhaseTaskCard:
+                  handleSetActiveBlueprintPhaseTaskCard,
+                taskHandoffSelectedTaskChange: handleTaskHandoffSelectedTaskChange,
+                taskHandoffTargetChange: handleTaskHandoffTargetChange,
+                taskHandoffStrictnessChange: handleTaskHandoffStrictnessChange,
+                generateTaskCardBuilderHandoff: handleGenerateTaskCardBuilderHandoff,
+                copyTaskCardBuilderHandoff: handleCopyTaskCardBuilderHandoff,
+                clearTaskCardBuilderHandoff: handleClearTaskCardBuilderHandoff,
+                taskImplSelectedTaskChange: handleTaskImplSelectedTaskChange,
+                taskImplBuilderSourceChange: handleTaskImplBuilderSourceChange,
+                taskImplDraftChange: handleTaskImplDraftChange,
+                saveTaskImplementationReport: handleSaveTaskImplementationReport,
+                copyTaskImplementationReport: handleCopyTaskImplementationReport,
+                clearTaskImplementationReport: handleClearTaskImplementationReport,
+                markTaskImplementationReturned: handleMarkTaskImplementationReturned,
+                markTaskReviewed: handleMarkTaskReviewed,
+                stageTaskImplementationReportForReview:
+                  handleStageTaskImplementationReportForReview,
+                generateBlueprintTaskReconciliation:
+                  handleGenerateBlueprintTaskReconciliation,
+                copyBlueprintTaskReconciliation:
+                  handleCopyBlueprintTaskReconciliation,
+                clearBlueprintTaskReconciliation:
+                  handleClearBlueprintTaskReconciliation,
+                generateTaskArtifactIndex: handleGenerateTaskArtifactIndex,
+                copyTaskArtifactIndex: handleCopyTaskArtifactIndex,
+                clearTaskArtifactIndex: handleClearTaskArtifactIndex,
+                taskArtifactIndexFilterChange: handleTaskArtifactIndexFilterChange,
+                blueprintPreviewFileSelect: handleBlueprintPreviewFileSelect,
+              },
+            })}
+          />
         ) : null}
 
         {activeTab === "project-setup" ? (
