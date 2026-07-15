@@ -2005,6 +2005,8 @@ export interface ProjectHistoryRecord {
   safeScaffoldFinalConfirmation: import("./buildModeFinalConfirmation").SafeScaffoldFinalConfirmationRecord | null;
   /** Stage 129: Safe Scaffold write result metadata (created paths only). */
   safeScaffoldWriteResult: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteResultRecord | null;
+  /** Stage 131: Local Planner Build Brief (copy/paste prompt only). */
+  localPlannerBuildBrief: import("./buildModeLocalPlannerBuildBrief").LocalPlannerBuildBriefRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2100,6 +2102,8 @@ export interface AppSnapshot {
   safeScaffoldFinalConfirmation: import("./buildModeFinalConfirmation").SafeScaffoldFinalConfirmationState;
   /** Stage 129: Safe Scaffold write (guarded create-only). */
   safeScaffoldWrite: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteState;
+  /** Stage 131: Local Planner Build Brief state. */
+  localPlannerBuildBrief: import("./buildModeLocalPlannerBuildBrief").LocalPlannerBuildBriefState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2370,6 +2374,12 @@ export const IPC_CHANNELS = {
   clearSafeScaffoldWriteResult: "nttc:clear-safe-scaffold-write-result",
   recordCopySafeScaffoldWriteResult:
     "nttc:record-copy-safe-scaffold-write-result",
+  setLocalPlannerBuildBriefOptions:
+    "nttc:set-local-planner-build-brief-options",
+  generateLocalPlannerBuildBrief: "nttc:generate-local-planner-build-brief",
+  clearLocalPlannerBuildBrief: "nttc:clear-local-planner-build-brief",
+  recordCopyLocalPlannerBuildBrief:
+    "nttc:record-copy-local-planner-build-brief",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2651,6 +2661,18 @@ export interface NttcApi {
   writeSafeScaffoldFiles: () => Promise<AppSnapshot>;
   clearSafeScaffoldWriteResult: () => Promise<AppSnapshot>;
   recordCopySafeScaffoldWriteResult: () => Promise<AppSnapshot>;
+  setLocalPlannerBuildBriefOptions: (options: {
+    strictness?: import("./buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+    targetLocalModelType?: import("./buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+    selectedTaskId?: string | null;
+  }) => Promise<AppSnapshot>;
+  generateLocalPlannerBuildBrief: (options?: {
+    strictness?: import("./buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+    targetLocalModelType?: import("./buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+    selectedTaskId?: string | null;
+  }) => Promise<AppSnapshot>;
+  clearLocalPlannerBuildBrief: () => Promise<AppSnapshot>;
+  recordCopyLocalPlannerBuildBrief: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,

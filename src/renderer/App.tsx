@@ -84,6 +84,9 @@ import { ReportsWorkflowSection } from "./components/ReportsWorkflowSection";
 import { QuickStartGuidePanel } from "./components/QuickStartGuidePanel";
 import { BlueprintTabSection } from "./components/BlueprintTabSection";
 import { buildBlueprintTabSectionProps } from "./components/blueprintTabSectionProps";
+import {
+  emptyLocalPlannerBuildBriefState,
+} from "../shared/buildModeLocalPlannerBuildBrief";
 import { BuildModeTab } from "./components/BuildModeTab";
 import { ReportsArchitectureSection } from "./components/ReportsArchitectureSection";
 import { buildReportsArchitectureSectionProps } from "./components/reportsArchitectureSectionProps";
@@ -611,6 +614,8 @@ const emptySafeScaffoldWrite = {
   canWrite: false,
 };
 
+const emptyLocalPlannerBuildBrief = emptyLocalPlannerBuildBriefState();
+
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
   statusMessage:
@@ -749,6 +754,7 @@ const emptySnapshot: AppSnapshot = {
   safeScaffoldWriteManifestPreview: emptySafeScaffoldWriteManifestPreview,
   safeScaffoldFinalConfirmation: emptySafeScaffoldFinalConfirmation,
   safeScaffoldWrite: emptySafeScaffoldWrite,
+  localPlannerBuildBrief: emptyLocalPlannerBuildBrief,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4760,6 +4766,8 @@ export function App() {
     emptySafeScaffoldFinalConfirmation;
   const safeScaffoldWrite =
     snapshot.safeScaffoldWrite ?? emptySafeScaffoldWrite;
+  const localPlannerBuildBrief =
+    snapshot.localPlannerBuildBrief ?? emptyLocalPlannerBuildBrief;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5124,6 +5132,8 @@ export function App() {
         ) &&
         safeScaffoldWrite.readinessBlockedReasons.length > 0,
     ),
+    localPlannerBuildBriefExists: Boolean(localPlannerBuildBrief.saved),
+    localPlannerBuildBriefStale: Boolean(localPlannerBuildBrief.saved?.stale),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5228,6 +5238,8 @@ export function App() {
         ) &&
         safeScaffoldWrite.readinessBlockedReasons.length > 0,
     ),
+    localPlannerBuildBriefExists: Boolean(localPlannerBuildBrief.saved),
+    localPlannerBuildBriefStale: Boolean(localPlannerBuildBrief.saved?.stale),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -8529,6 +8541,16 @@ export function App() {
         );
         return;
       }
+      case "generate-local-planner-build-brief":
+      case "regenerate-local-planner-build-brief":
+      case "copy-local-planner-build-brief": {
+        await navigateOnly(
+          "build",
+          "build-mode-local-planner-build-brief",
+          "Use Local Planner Build Brief on the Build tab (copy/paste only — no AI call).",
+        );
+        return;
+      }
       default: {
         const _exhaustive: never = kind;
         void _exhaustive;
@@ -8986,6 +9008,10 @@ export function App() {
             safeScaffoldWriteManifestPreview={safeScaffoldWriteManifestPreview}
             safeScaffoldFinalConfirmation={safeScaffoldFinalConfirmation}
             safeScaffoldWrite={safeScaffoldWrite}
+            localPlannerBuildBrief={localPlannerBuildBrief}
+            taskCardOptions={(blueprint.phaseTaskCards.saved?.cards ?? []).map(
+              (c) => ({ id: c.id, title: c.title }),
+            )}
             onOpenBlueprint={() => selectTab("blueprint")}
             onSelectTargetFolder={async () => {
               const next = await window.nttc.selectSafeScaffoldTargetFolder();
@@ -9126,6 +9152,35 @@ export function App() {
                 await window.nttc.logUiAction(
                   "warning",
                   "Copy Safe Scaffold write result failed",
+                  "Clipboard write failed.",
+                );
+              }
+            }}
+            onSetLocalPlannerBuildBriefOptions={async (options) => {
+              const next =
+                await window.nttc.setLocalPlannerBuildBriefOptions(options);
+              setSnapshot(next);
+            }}
+            onGenerateLocalPlannerBuildBrief={async () => {
+              const next = await window.nttc.generateLocalPlannerBuildBrief();
+              setSnapshot(next);
+            }}
+            onClearLocalPlannerBuildBrief={async () => {
+              const next = await window.nttc.clearLocalPlannerBuildBrief();
+              setSnapshot(next);
+            }}
+            onCopyLocalPlannerBuildBrief={async () => {
+              const md = localPlannerBuildBrief.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopyLocalPlannerBuildBrief();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Local Planner Build Brief failed",
                   "Clipboard write failed.",
                 );
               }

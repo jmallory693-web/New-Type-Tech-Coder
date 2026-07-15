@@ -69,6 +69,7 @@ import type { SafeScaffoldFileContentPreviewRecord } from "../../shared/buildMod
 import type { SafeScaffoldWriteManifestPreviewRecord } from "../../shared/buildModeWriteManifestPreview";
 import type { SafeScaffoldFinalConfirmationRecord } from "../../shared/buildModeFinalConfirmation";
 import type { SafeScaffoldWriteResultRecord } from "../../shared/buildModeSafeScaffoldWrite";
+import type { LocalPlannerBuildBriefRecord } from "../../shared/buildModeLocalPlannerBuildBrief";
 import type { TaskImplementationBuilderSource } from "../../shared/taskImplementationIntakeConstants";
 import type { ArchitectureRefactorImplementationBuilderSource } from "../../shared/architectureRefactorTasks/architectureRefactorTaskImplementationIntakeConstants";
 import type { SafetyGate } from "../safety/SafetyGate";
@@ -274,6 +275,7 @@ function migrateProjectRecords(
       safeScaffoldFinalConfirmation:
         record.safeScaffoldFinalConfirmation ?? null,
       safeScaffoldWriteResult: record.safeScaffoldWriteResult ?? null,
+      localPlannerBuildBrief: record.localPlannerBuildBrief ?? null,
       architectureRefactorTaskCards: record.architectureRefactorTaskCards ?? null,
       architectureRefactorTaskBuilderHandoff:
         record.architectureRefactorTaskBuilderHandoff ?? null,
@@ -599,6 +601,7 @@ export class HistoryStore {
     safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
     safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationRecord | null;
     safeScaffoldWriteResult: SafeScaffoldWriteResultRecord | null;
+    localPlannerBuildBrief: LocalPlannerBuildBriefRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -769,6 +772,7 @@ export class HistoryStore {
         safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
         safeScaffoldFinalConfirmation: input.safeScaffoldFinalConfirmation,
         safeScaffoldWriteResult: input.safeScaffoldWriteResult,
+        localPlannerBuildBrief: input.localPlannerBuildBrief,
         architectureRefactorTaskCards: input.architectureRefactorTaskCards,
         architectureRefactorTaskBuilderHandoff:
           input.architectureRefactorTaskBuilderHandoff,
@@ -993,6 +997,12 @@ export class HistoryStore {
         record.safeScaffoldWriteResult = previous.safeScaffoldWriteResult;
       }
       if (
+        !record.localPlannerBuildBrief &&
+        previous?.localPlannerBuildBrief
+      ) {
+        record.localPlannerBuildBrief = previous.localPlannerBuildBrief;
+      }
+      if (
         !record.architectureRefactorTaskCards &&
         previous?.architectureRefactorTaskCards
       ) {
@@ -1183,6 +1193,7 @@ export class HistoryStore {
     safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
     safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationRecord | null;
     safeScaffoldWriteResult: SafeScaffoldWriteResultRecord | null;
+    localPlannerBuildBrief: LocalPlannerBuildBriefRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -1803,6 +1814,7 @@ export class HistoryStore {
       safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
       safeScaffoldFinalConfirmation: input.safeScaffoldFinalConfirmation,
       safeScaffoldWriteResult: input.safeScaffoldWriteResult,
+      localPlannerBuildBrief: input.localPlannerBuildBrief,
       architectureRefactorTaskCards: input.architectureRefactorTaskCards,
       architectureRefactorTaskBuilderHandoff:
         input.architectureRefactorTaskBuilderHandoff,

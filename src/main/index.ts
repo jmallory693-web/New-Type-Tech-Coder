@@ -59,6 +59,7 @@ import { SafeScaffoldFileContentPreviewManager } from "./buildMode/SafeScaffoldF
 import { SafeScaffoldWriteManifestPreviewManager } from "./buildMode/SafeScaffoldWriteManifestPreviewManager";
 import { SafeScaffoldFinalConfirmationManager } from "./buildMode/SafeScaffoldFinalConfirmationManager";
 import { SafeScaffoldWriteManager } from "./buildMode/SafeScaffoldWriteManager";
+import { LocalPlannerBuildBriefManager } from "./buildMode/LocalPlannerBuildBriefManager";
 import {
   SAFE_SCAFFOLD_WRITE_DIALOG_DETAIL,
   SAFE_SCAFFOLD_WRITE_DIALOG_MESSAGE,
@@ -197,6 +198,9 @@ const safeScaffoldWriteManifestPreviewManager =
 const safeScaffoldFinalConfirmationManager =
   new SafeScaffoldFinalConfirmationManager(safetyGate);
 const safeScaffoldWriteManager = new SafeScaffoldWriteManager(safetyGate);
+const localPlannerBuildBriefManager = new LocalPlannerBuildBriefManager(
+  safetyGate,
+);
 const architectureRefactorTaskCardsManager =
   new ArchitectureRefactorTaskCardsManager(safetyGate);
 const architectureRefactorTaskBuilderHandoffManager =
@@ -486,6 +490,7 @@ function getProjectMemoryInput() {
     safeScaffoldFinalConfirmation:
       safeScaffoldFinalConfirmationManager.getSaved(),
     safeScaffoldWriteResult: safeScaffoldWriteManager.getSaved(),
+    localPlannerBuildBrief: localPlannerBuildBriefManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -561,6 +566,7 @@ function getBlueprintPersistenceFields() {
     safeScaffoldFinalConfirmation:
       safeScaffoldFinalConfirmationManager.getSaved(),
     safeScaffoldWriteResult: safeScaffoldWriteManager.getSaved(),
+    localPlannerBuildBrief: localPlannerBuildBriefManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -829,6 +835,40 @@ function getSafeScaffoldWriteContext() {
   };
 }
 
+function getLocalPlannerBuildBriefContext() {
+  const writeCtx = getSafeScaffoldWriteContext();
+  const writeState = safeScaffoldWriteManager.getState(writeCtx);
+  const taskCards = blueprintTaskCardsManager.getSaved();
+  const completeness = blueprintManager.getState().completenessReport;
+  const completenessLabel =
+    completeness == null
+      ? null
+      : `${completeness.readiness} — ${completeness.recommendedNextStep}`;
+
+  return {
+    blueprintImported: writeCtx.blueprintImported,
+    blueprintProjectType: writeCtx.blueprintProjectType,
+    blueprintCompletenessLabel: completenessLabel,
+    taskCardCount: writeCtx.taskCardCount,
+    taskCardsGeneratedAt: taskCards?.generatedAt ?? null,
+    taskCards: (taskCards?.cards ?? []).map((c) => ({
+      id: c.id,
+      title: c.title,
+      phase: c.phase,
+      goal: c.goal,
+    })),
+    targetFolderPath: writeCtx.target.selectedPath,
+    targetSafetyStatus: writeCtx.target.lastCheck?.status ?? null,
+    fileTreeGeneratedAt: writeCtx.fileTree?.generatedAt ?? null,
+    fileTreeProposedPaths: writeCtx.fileTree?.proposedRelativePaths ?? [],
+    fileContentGeneratedAt: writeCtx.fileContent?.generatedAt ?? null,
+    writeManifestGeneratedAt: writeCtx.writeManifest?.generatedAt ?? null,
+    finalConfirmationConfirmedAt: writeCtx.finalConfirmation?.confirmedAt ?? null,
+    writeResultWrittenAt: writeState.saved?.writtenAt ?? null,
+    writeCreatedRelativePaths: writeState.saved?.createdRelativePaths ?? [],
+  };
+}
+
 function buildSnapshot(): AppSnapshot {
   const project = safetyGate.getProject();
   return {
@@ -893,6 +933,9 @@ function buildSnapshot(): AppSnapshot {
     safeScaffoldWrite: safeScaffoldWriteManager.getState(
       getSafeScaffoldWriteContext(),
     ),
+    localPlannerBuildBrief: localPlannerBuildBriefManager.getState(
+      getLocalPlannerBuildBriefContext(),
+    ),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getState(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getState(),
@@ -940,6 +983,7 @@ function runProjectSummary(): AppSnapshot {
       "Project summary re-scanned.",
     );
     safeScaffoldWriteManager.markStale("Project summary re-scanned.");
+    localPlannerBuildBriefManager.markStale("Project summary re-scanned.");
     architectureRefactorTaskBuilderHandoffManager.markStale(
       "Project summary re-scanned.",
     );
@@ -1097,6 +1141,7 @@ function resetSessionForProjectChange(): void {
   safeScaffoldWriteManifestPreviewManager.clearForProjectChange();
   safeScaffoldFinalConfirmationManager.clearForProjectChange();
   safeScaffoldWriteManager.clearForProjectChange();
+  localPlannerBuildBriefManager.clearForProjectChange();
   architectureRefactorTaskCardsManager.clearForProjectChange();
   architectureRefactorTaskBuilderHandoffManager.clearForProjectChange();
   architectureRefactorTaskImplementationIntakeManager.clearForProjectChange();
@@ -1277,6 +1322,9 @@ function openProjectPath(
       );
       safeScaffoldWriteManager.restoreSaved(
         saved.safeScaffoldWriteResult ?? null,
+      );
+      localPlannerBuildBriefManager.restoreSaved(
+        saved.localPlannerBuildBrief ?? null,
       );
       architectureRefactorTaskCardsManager.restoreSaved(
         saved.architectureRefactorTaskCards ?? null,
@@ -3888,6 +3936,7 @@ function registerIpc(): void {
     );
     safeScaffoldFinalConfirmationManager.markStale("Blueprint imported/saved.");
     safeScaffoldWriteManager.markStale("Blueprint imported/saved.");
+    localPlannerBuildBriefManager.markStale("Blueprint imported/saved.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -3903,6 +3952,7 @@ function registerIpc(): void {
     safeScaffoldWriteManifestPreviewManager.markStale("Blueprint cleared.");
     safeScaffoldFinalConfirmationManager.markStale("Blueprint cleared.");
     safeScaffoldWriteManager.markStale("Blueprint cleared.");
+    localPlannerBuildBriefManager.markStale("Blueprint cleared.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4186,6 +4236,9 @@ function registerIpc(): void {
     safeScaffoldWriteManager.markStale(
       "Blueprint planner draft saved as imported.",
     );
+    localPlannerBuildBriefManager.markStale(
+      "Blueprint planner draft saved as imported.",
+    );
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4211,6 +4264,7 @@ function registerIpc(): void {
       "Blueprint task cards regenerated.",
     );
     safeScaffoldWriteManager.markStale("Blueprint task cards regenerated.");
+    localPlannerBuildBriefManager.markStale("Blueprint task cards regenerated.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4232,6 +4286,7 @@ function registerIpc(): void {
       "Blueprint task cards cleared.",
     );
     safeScaffoldWriteManager.markStale("Blueprint task cards cleared.");
+    localPlannerBuildBriefManager.markStale("Blueprint task cards cleared.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -5004,6 +5059,7 @@ function registerIpc(): void {
       "Safe Scaffold target folder changed.",
     );
     safeScaffoldWriteManager.markStale("Safe Scaffold target folder changed.");
+    localPlannerBuildBriefManager.markStale("Safe Scaffold target folder changed.");
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5024,6 +5080,7 @@ function registerIpc(): void {
       "Safe Scaffold target folder cleared.",
     );
     safeScaffoldWriteManager.markStale("Safe Scaffold target folder cleared.");
+    localPlannerBuildBriefManager.markStale("Safe Scaffold target folder cleared.");
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5047,6 +5104,9 @@ function registerIpc(): void {
     safeScaffoldWriteManager.markStale(
       "Safe Scaffold target folder safety refreshed.",
     );
+    localPlannerBuildBriefManager.markStale(
+      "Safe Scaffold target folder safety refreshed.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5068,6 +5128,9 @@ function registerIpc(): void {
     safeScaffoldWriteManager.markStale(
       "Safe Scaffold file-tree preview regenerated.",
     );
+    localPlannerBuildBriefManager.markStale(
+      "Safe Scaffold file-tree preview regenerated.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5085,6 +5148,9 @@ function registerIpc(): void {
       "Safe Scaffold file-tree preview cleared.",
     );
     safeScaffoldWriteManager.markStale(
+      "Safe Scaffold file-tree preview cleared.",
+    );
+    localPlannerBuildBriefManager.markStale(
       "Safe Scaffold file-tree preview cleared.",
     );
     persistSessionHistory();
@@ -5111,6 +5177,9 @@ function registerIpc(): void {
     safeScaffoldWriteManager.markStale(
       "Safe Scaffold file-content preview regenerated.",
     );
+    localPlannerBuildBriefManager.markStale(
+      "Safe Scaffold file-content preview regenerated.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5125,6 +5194,9 @@ function registerIpc(): void {
       "Safe Scaffold file-content preview cleared.",
     );
     safeScaffoldWriteManager.markStale(
+      "Safe Scaffold file-content preview cleared.",
+    );
+    localPlannerBuildBriefManager.markStale(
       "Safe Scaffold file-content preview cleared.",
     );
     persistSessionHistory();
@@ -5148,6 +5220,9 @@ function registerIpc(): void {
     safeScaffoldWriteManager.markStale(
       "Safe Scaffold write-manifest preview regenerated.",
     );
+    localPlannerBuildBriefManager.markStale(
+      "Safe Scaffold write-manifest preview regenerated.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5159,6 +5234,9 @@ function registerIpc(): void {
       "Safe Scaffold write-manifest preview cleared.",
     );
     safeScaffoldWriteManager.markStale(
+      "Safe Scaffold write-manifest preview cleared.",
+    );
+    localPlannerBuildBriefManager.markStale(
       "Safe Scaffold write-manifest preview cleared.",
     );
     persistSessionHistory();
@@ -5190,6 +5268,9 @@ function registerIpc(): void {
       safeScaffoldWriteManager.markStale(
         "Safe Scaffold final confirmation recorded.",
       );
+      localPlannerBuildBriefManager.markStale(
+        "Safe Scaffold final confirmation recorded.",
+      );
       persistSessionHistory();
       broadcastSnapshot();
       return buildSnapshot();
@@ -5199,6 +5280,9 @@ function registerIpc(): void {
   ipcMain.handle(IPC_CHANNELS.clearSafeScaffoldFinalConfirmation, () => {
     safeScaffoldFinalConfirmationManager.clear();
     safeScaffoldWriteManager.markStale(
+      "Safe Scaffold final confirmation cleared.",
+    );
+    localPlannerBuildBriefManager.markStale(
       "Safe Scaffold final confirmation cleared.",
     );
     persistSessionHistory();
@@ -5258,6 +5342,7 @@ function registerIpc(): void {
     safeScaffoldWriteManifestPreviewManager.markStale(
       "Safe Scaffold files were written.",
     );
+    localPlannerBuildBriefManager.markStale("Safe Scaffold files were written.");
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5265,6 +5350,9 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC_CHANNELS.clearSafeScaffoldWriteResult, () => {
     safeScaffoldWriteManager.clear();
+    localPlannerBuildBriefManager.markStale(
+      "Safe Scaffold write result cleared.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5272,6 +5360,56 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC_CHANNELS.recordCopySafeScaffoldWriteResult, () => {
     safeScaffoldWriteManager.recordCopy();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.setLocalPlannerBuildBriefOptions,
+    (_event, options: unknown) => {
+      if (options && typeof options === "object") {
+        localPlannerBuildBriefManager.setOptions(
+          options as {
+            strictness?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+            targetLocalModelType?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+            selectedTaskId?: string | null;
+          },
+        );
+        persistSessionHistory();
+      }
+      broadcastSnapshot();
+      return buildSnapshot();
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.generateLocalPlannerBuildBrief,
+    (_event, options: unknown) => {
+      localPlannerBuildBriefManager.generate(
+        getLocalPlannerBuildBriefContext(),
+        options && typeof options === "object"
+          ? (options as {
+              strictness?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+              targetLocalModelType?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+              selectedTaskId?: string | null;
+            })
+          : undefined,
+      );
+      persistSessionHistory();
+      broadcastSnapshot();
+      return buildSnapshot();
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.clearLocalPlannerBuildBrief, () => {
+    localPlannerBuildBriefManager.clear();
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.recordCopyLocalPlannerBuildBrief, () => {
+    localPlannerBuildBriefManager.recordCopy();
     broadcastSnapshot();
     return buildSnapshot();
   });

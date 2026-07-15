@@ -6,6 +6,16 @@ import type { SafeScaffoldFileContentPreviewState } from "../../shared/buildMode
 import type { SafeScaffoldWriteManifestPreviewState } from "../../shared/buildModeWriteManifestPreview";
 import type { SafeScaffoldFinalConfirmationState } from "../../shared/buildModeFinalConfirmation";
 import type { SafeScaffoldWriteState } from "../../shared/buildModeSafeScaffoldWrite";
+import type { LocalPlannerBuildBriefState } from "../../shared/buildModeLocalPlannerBuildBrief";
+import {
+  LOCAL_PLANNER_BUILD_BRIEF_COPY_PASTE_NOTE,
+  LOCAL_PLANNER_BUILD_BRIEF_NO_AI_NOTE,
+  LOCAL_PLANNER_BUILD_BRIEF_UI_LABELS,
+  LOCAL_PLANNER_STRICTNESS_LABELS,
+  LOCAL_PLANNER_TARGET_MODEL_LABELS,
+  type LocalPlannerStrictness,
+  type LocalPlannerTargetModelType,
+} from "../../shared/buildModeLocalPlannerBuildBrief";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -59,6 +69,8 @@ export function BuildModeTab({
   safeScaffoldWriteManifestPreview,
   safeScaffoldFinalConfirmation,
   safeScaffoldWrite,
+  localPlannerBuildBrief,
+  taskCardOptions,
   onOpenBlueprint,
   onSelectTargetFolder,
   onClearTargetFolder,
@@ -79,6 +91,10 @@ export function BuildModeTab({
   onWriteSafeScaffoldFiles,
   onClearWriteResult,
   onCopyWriteResult,
+  onSetLocalPlannerBuildBriefOptions,
+  onGenerateLocalPlannerBuildBrief,
+  onClearLocalPlannerBuildBrief,
+  onCopyLocalPlannerBuildBrief,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
@@ -87,6 +103,8 @@ export function BuildModeTab({
   safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewState;
   safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationState;
   safeScaffoldWrite: SafeScaffoldWriteState;
+  localPlannerBuildBrief: LocalPlannerBuildBriefState;
+  taskCardOptions: Array<{ id: string; title: string }>;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
   onClearTargetFolder: () => void | Promise<void>;
@@ -111,6 +129,14 @@ export function BuildModeTab({
   onWriteSafeScaffoldFiles: () => void | Promise<void>;
   onClearWriteResult: () => void | Promise<void>;
   onCopyWriteResult: () => void | Promise<void>;
+  onSetLocalPlannerBuildBriefOptions: (options: {
+    strictness?: LocalPlannerStrictness;
+    targetLocalModelType?: LocalPlannerTargetModelType;
+    selectedTaskId?: string | null;
+  }) => void | Promise<void>;
+  onGenerateLocalPlannerBuildBrief: () => void | Promise<void>;
+  onClearLocalPlannerBuildBrief: () => void | Promise<void>;
+  onCopyLocalPlannerBuildBrief: () => void | Promise<void>;
 }) {
   const readiness = deriveBuildModeReadiness(
     blueprint,
@@ -171,6 +197,8 @@ export function BuildModeTab({
 
   const writeUi =
     SAFE_SCAFFOLD_WRITE_UI_LABELS[safeScaffoldWrite.uiStatus];
+  const plannerUi =
+    LOCAL_PLANNER_BUILD_BRIEF_UI_LABELS[localPlannerBuildBrief.uiStatus];
 
   const [ackBoundaries, setAckBoundaries] = useState(false);
   const [ackStage127, setAckStage127] = useState(false);
@@ -1133,6 +1161,229 @@ export function BuildModeTab({
             {safeScaffoldWrite.statusMessage ? (
               <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
                 {safeScaffoldWrite.statusMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="section-divider" />
+
+          <div data-focus-id="build-mode-local-planner-build-brief">
+            <div className="field-label">Local Planner Build Brief</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              {LOCAL_PLANNER_BUILD_BRIEF_COPY_PASTE_NOTE}
+            </p>
+            <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+              {LOCAL_PLANNER_BUILD_BRIEF_NO_AI_NOTE}
+            </p>
+
+            <div className="field-label" style={{ marginTop: "0.75rem" }}>
+              Planning strictness
+            </div>
+            <select
+              value={localPlannerBuildBrief.options.strictness}
+              disabled={localPlannerBuildBrief.busy}
+              onChange={(e) =>
+                void onSetLocalPlannerBuildBriefOptions({
+                  strictness: e.target.value as LocalPlannerStrictness,
+                })
+              }
+            >
+              {(
+                Object.keys(LOCAL_PLANNER_STRICTNESS_LABELS) as LocalPlannerStrictness[]
+              ).map((key) => (
+                <option key={key} value={key}>
+                  {LOCAL_PLANNER_STRICTNESS_LABELS[key]}
+                </option>
+              ))}
+            </select>
+
+            <div className="field-label" style={{ marginTop: "0.75rem" }}>
+              Target local model type
+            </div>
+            <select
+              value={localPlannerBuildBrief.options.targetLocalModelType}
+              disabled={localPlannerBuildBrief.busy}
+              onChange={(e) =>
+                void onSetLocalPlannerBuildBriefOptions({
+                  targetLocalModelType: e.target
+                    .value as LocalPlannerTargetModelType,
+                })
+              }
+            >
+              {(
+                Object.keys(
+                  LOCAL_PLANNER_TARGET_MODEL_LABELS,
+                ) as LocalPlannerTargetModelType[]
+              ).map((key) => (
+                <option key={key} value={key}>
+                  {LOCAL_PLANNER_TARGET_MODEL_LABELS[key]}
+                </option>
+              ))}
+            </select>
+
+            <div className="field-label" style={{ marginTop: "0.75rem" }}>
+              Focus task (optional)
+            </div>
+            <select
+              value={localPlannerBuildBrief.options.selectedTaskId ?? ""}
+              disabled={localPlannerBuildBrief.busy}
+              onChange={(e) =>
+                void onSetLocalPlannerBuildBriefOptions({
+                  selectedTaskId: e.target.value ? e.target.value : null,
+                })
+              }
+            >
+              <option value="">Ask planner to choose</option>
+              {taskCardOptions.map((card) => (
+                <option key={card.id} value={card.id}>
+                  {card.title}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                marginTop: "0.75rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => void onGenerateLocalPlannerBuildBrief()}
+                disabled={
+                  localPlannerBuildBrief.busy ||
+                  !localPlannerBuildBrief.canGenerate
+                }
+              >
+                Generate Planner Brief
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyLocalPlannerBuildBrief()}
+                disabled={
+                  localPlannerBuildBrief.busy ||
+                  !localPlannerBuildBrief.saved?.markdown
+                }
+              >
+                Copy Planner Brief
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearLocalPlannerBuildBrief()}
+                disabled={
+                  localPlannerBuildBrief.busy || !localPlannerBuildBrief.saved
+                }
+              >
+                Clear Planner Brief
+              </button>
+            </div>
+
+            <div
+              className="onedrive-warning"
+              role="status"
+              style={{ marginTop: "0.75rem" }}
+            >
+              <div className="field-label" style={{ marginBottom: "0.25rem" }}>
+                Planner Brief Status
+              </div>
+              <div className="field-value">
+                <strong>{plannerUi}</strong>
+                {localPlannerBuildBrief.availableMode
+                  ? ` · mode: ${localPlannerBuildBrief.availableMode}`
+                  : null}
+              </div>
+            </div>
+
+            {localPlannerBuildBrief.readinessBlockedReasons.length > 0 &&
+            !localPlannerBuildBrief.canGenerate ? (
+              <div style={{ marginTop: "0.5rem" }}>
+                <div className="field-label">Not ready</div>
+                <ul className="workflow-list">
+                  {localPlannerBuildBrief.readinessBlockedReasons.map(
+                    (reason) => (
+                      <li key={reason}>{reason}</li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            ) : null}
+
+            {localPlannerBuildBrief.saved ? (
+              <>
+                <div className="field-value" style={{ marginTop: "0.5rem" }}>
+                  Generated:{" "}
+                  <strong>{localPlannerBuildBrief.saved.generatedAt}</strong>
+                  {localPlannerBuildBrief.saved.stale ? (
+                    <span className="muted"> (stale)</span>
+                  ) : null}
+                </div>
+                <div className="field-value">
+                  Mode:{" "}
+                  <strong>{localPlannerBuildBrief.saved.mode}</strong>
+                </div>
+                <div className="field-value">
+                  Strictness:{" "}
+                  <strong>
+                    {
+                      LOCAL_PLANNER_STRICTNESS_LABELS[
+                        localPlannerBuildBrief.saved.strictness
+                      ]
+                    }
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Target model:{" "}
+                  <strong>
+                    {
+                      LOCAL_PLANNER_TARGET_MODEL_LABELS[
+                        localPlannerBuildBrief.saved.targetLocalModelType
+                      ]
+                    }
+                  </strong>
+                </div>
+                {localPlannerBuildBrief.saved.selectedTaskTitle ? (
+                  <div className="field-value">
+                    Focus task:{" "}
+                    <strong>
+                      {localPlannerBuildBrief.saved.selectedTaskTitle}
+                    </strong>
+                  </div>
+                ) : (
+                  <div className="field-value muted">
+                    Focus task: planner chooses
+                  </div>
+                )}
+                {localPlannerBuildBrief.saved.warnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {localPlannerBuildBrief.saved.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Planner brief markdown
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "28rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {localPlannerBuildBrief.saved.markdown}
+                </pre>
+              </>
+            ) : null}
+            {localPlannerBuildBrief.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {localPlannerBuildBrief.statusMessage}
               </p>
             ) : null}
           </div>

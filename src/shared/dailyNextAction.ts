@@ -102,6 +102,9 @@ export type DailyNextActionKind =
   | "run-safe-scaffold-write"
   | "resolve-safe-scaffold-write-blockers"
   | "review-written-safe-scaffold-files"
+  | "generate-local-planner-build-brief"
+  | "regenerate-local-planner-build-brief"
+  | "copy-local-planner-build-brief"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -215,6 +218,9 @@ export interface DailyNextActionInput {
   safeScaffoldWriteResultExists?: boolean;
   safeScaffoldWriteCanWrite?: boolean;
   safeScaffoldWriteBlocked?: boolean;
+  /** Stage 131: Local Planner Build Brief (low priority). */
+  localPlannerBuildBriefExists?: boolean;
+  localPlannerBuildBriefStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -393,6 +399,12 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
     "Opens Build Mode to resolve Safe Scaffold write blockers.",
   "review-written-safe-scaffold-files":
     "Opens Build Mode to review the written scaffold result. NTTC did not run commands or install packages.",
+  "generate-local-planner-build-brief":
+    "Opens Build Mode to generate a Local Planner Build Brief (copy/paste only — no AI call).",
+  "regenerate-local-planner-build-brief":
+    "Opens Build Mode to regenerate a stale Local Planner Build Brief.",
+  "copy-local-planner-build-brief":
+    "Opens Build Mode so you can copy the Local Planner Build Brief into a local model.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1902,17 +1914,51 @@ export function calculateDailyNextAction(
       const writeResultExists = Boolean(input.safeScaffoldWriteResultExists);
       const writeCanWrite = Boolean(input.safeScaffoldWriteCanWrite);
       const writeBlocked = Boolean(input.safeScaffoldWriteBlocked);
+      const plannerBriefExists = Boolean(input.localPlannerBuildBriefExists);
+      const plannerBriefStale = Boolean(input.localPlannerBuildBriefStale);
       if (writeResultExists) {
+        if (plannerBriefStale) {
+          return make(
+            "regenerate-local-planner-build-brief",
+            "Regenerate the Local Planner Build Brief before using it",
+            "Regenerate the Local Planner Build Brief before using it.",
+            button(
+              "Open Build Tab",
+              "regenerate-local-planner-build-brief",
+              "navigate",
+            ),
+            button("Open Blueprint Tab", "open-blueprint", "navigate"),
+            freshness,
+          );
+        }
+        if (!plannerBriefExists) {
+          return make(
+            "generate-local-planner-build-brief",
+            "Generate a Local Planner Build Brief to choose the next build step",
+            "Generate a Local Planner Build Brief to choose the next build step.",
+            button(
+              "Open Build Tab",
+              "generate-local-planner-build-brief",
+              "navigate",
+            ),
+            button("Open Blueprint Tab", "open-blueprint", "navigate"),
+            freshness,
+          );
+        }
         return make(
-          "review-written-safe-scaffold-files",
-          "Review the written scaffold files in the target folder",
-          "Review the written scaffold files in the target folder. NTTC did not run commands or install packages.",
+          "copy-local-planner-build-brief",
+          "Copy the Local Planner Build Brief into a local model and import the response in a later stage",
+          "Copy the Local Planner Build Brief into a local model and import the response in a later stage.",
+          button(
+            "Open Build Tab",
+            "copy-local-planner-build-brief",
+            "navigate",
+          ),
           button(
             "Open Build Tab",
             "review-written-safe-scaffold-files",
             "navigate",
           ),
-          button("Open Blueprint Tab", "open-blueprint", "navigate"),
           freshness,
         );
       }

@@ -122,6 +122,9 @@ export interface WorkflowGuidanceInput {
   safeScaffoldFinalConfirmationStale?: boolean;
   /** Stage 129: Safe Scaffold write result. */
   safeScaffoldWriteResultExists?: boolean;
+  /** Stage 131: Local Planner Build Brief. */
+  localPlannerBuildBriefExists?: boolean;
+  localPlannerBuildBriefStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -279,6 +282,11 @@ function isCompleted(
       );
     case "build-mode-safe-scaffold-write":
       return Boolean(input.safeScaffoldWriteResultExists);
+    case "build-mode-local-planner-build-brief":
+      return Boolean(
+        input.localPlannerBuildBriefExists &&
+          !input.localPlannerBuildBriefStale,
+      );
     default:
       return false;
   }
@@ -342,6 +350,10 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "run-safe-scaffold-write": "build-mode-safe-scaffold-write",
     "resolve-safe-scaffold-write-blockers": "build-mode-safe-scaffold-write",
     "review-written-safe-scaffold-files": "build-mode-safe-scaffold-write",
+    "generate-local-planner-build-brief": "build-mode-local-planner-build-brief",
+    "regenerate-local-planner-build-brief":
+      "build-mode-local-planner-build-brief",
+    "copy-local-planner-build-brief": "build-mode-local-planner-build-brief",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -525,6 +537,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Safe Scaffold files written (no commands / no installs).";
       }
       return "Write Safe Scaffold Files after final confirmation + Safe re-check.";
+    case "build-mode-local-planner-build-brief":
+      if (input.localPlannerBuildBriefStale) {
+        return "Local Planner Build Brief is stale — regenerate before using.";
+      }
+      if (input.localPlannerBuildBriefExists) {
+        return "Local Planner Build Brief ready (copy/paste only — no AI call).";
+      }
+      return "Generate a Local Planner Build Brief for local LLM/SLM planning.";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -715,6 +735,11 @@ export function buildWorkflowProgress(
       id: "build-mode-safe-scaffold-write",
       label: "Safe Scaffold Files Written",
       focusId: "build-mode-safe-scaffold-write",
+    },
+    {
+      id: "build-mode-local-planner-build-brief",
+      label: "Local Planner Build Brief",
+      focusId: "build-mode-local-planner-build-brief",
     },
   ];
 

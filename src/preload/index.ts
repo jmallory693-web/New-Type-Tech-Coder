@@ -280,6 +280,12 @@ const IPC_CHANNELS = {
   clearSafeScaffoldWriteResult: "nttc:clear-safe-scaffold-write-result",
   recordCopySafeScaffoldWriteResult:
     "nttc:record-copy-safe-scaffold-write-result",
+  setLocalPlannerBuildBriefOptions:
+    "nttc:set-local-planner-build-brief-options",
+  generateLocalPlannerBuildBrief: "nttc:generate-local-planner-build-brief",
+  clearLocalPlannerBuildBrief: "nttc:clear-local-planner-build-brief",
+  recordCopyLocalPlannerBuildBrief:
+    "nttc:record-copy-local-planner-build-brief",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -1072,6 +1078,26 @@ const api: NttcApi = {
 
   recordCopySafeScaffoldWriteResult: (): Promise<AppSnapshot> =>
     ipcRenderer.invoke(IPC_CHANNELS.recordCopySafeScaffoldWriteResult),
+
+  setLocalPlannerBuildBriefOptions: (options: {
+    strictness?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+    targetLocalModelType?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+    selectedTaskId?: string | null;
+  }): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.setLocalPlannerBuildBriefOptions, options),
+
+  generateLocalPlannerBuildBrief: (options?: {
+    strictness?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerStrictness;
+    targetLocalModelType?: import("../shared/buildModeLocalPlannerBuildBrief").LocalPlannerTargetModelType;
+    selectedTaskId?: string | null;
+  }): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.generateLocalPlannerBuildBrief, options),
+
+  clearLocalPlannerBuildBrief: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearLocalPlannerBuildBrief),
+
+  recordCopyLocalPlannerBuildBrief: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.recordCopyLocalPlannerBuildBrief),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,
