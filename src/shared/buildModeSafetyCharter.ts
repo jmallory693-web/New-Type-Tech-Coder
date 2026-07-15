@@ -70,12 +70,20 @@ export const FUTURE_SAFE_SCAFFOLD_REQUIREMENTS = [
     label: "Scaffold file contents preview generated",
   },
   {
+    id: "written-files-manifest",
+    label: "Write manifest preview prepared",
+  },
+  {
     id: "user-confirmed-write",
     label: "User confirmed write",
   },
   {
-    id: "written-files-manifest",
-    label: "Written-files manifest prepared",
+    id: "actual-files-written",
+    label: "Actual files written",
+  },
+  {
+    id: "written-files-manifest-after-write",
+    label: "Written-files manifest after write",
   },
 ] as const;
 

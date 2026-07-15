@@ -582,6 +582,15 @@ const emptySafeScaffoldFileContentPreview = {
   readinessBlockedReasons: [] as string[],
 };
 
+const emptySafeScaffoldWriteManifestPreview = {
+  saved: null,
+  busy: false,
+  statusMessage:
+    "Generate a Safe Scaffold Write Manifest Preview after current File Tree and File Content previews exist (preview only — no files are created).",
+  uiStatus: "not-ready" as const,
+  readinessBlockedReasons: [] as string[],
+};
+
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
   statusMessage:
@@ -717,6 +726,7 @@ const emptySnapshot: AppSnapshot = {
   safeScaffoldTarget: emptySafeScaffoldTarget,
   safeScaffoldFileTreePreview: emptySafeScaffoldFileTreePreview,
   safeScaffoldFileContentPreview: emptySafeScaffoldFileContentPreview,
+  safeScaffoldWriteManifestPreview: emptySafeScaffoldWriteManifestPreview,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4720,6 +4730,9 @@ export function App() {
   const safeScaffoldFileContentPreview =
     snapshot.safeScaffoldFileContentPreview ??
     emptySafeScaffoldFileContentPreview;
+  const safeScaffoldWriteManifestPreview =
+    snapshot.safeScaffoldWriteManifestPreview ??
+    emptySafeScaffoldWriteManifestPreview;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5058,6 +5071,13 @@ export function App() {
     safeScaffoldFileContentPreviewStale: Boolean(
       safeScaffoldFileContentPreview.saved?.stale,
     ),
+    safeScaffoldWriteManifestPreviewExists: Boolean(
+      safeScaffoldWriteManifestPreview.saved &&
+        !safeScaffoldWriteManifestPreview.saved.stale,
+    ),
+    safeScaffoldWriteManifestPreviewStale: Boolean(
+      safeScaffoldWriteManifestPreview.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5135,6 +5155,13 @@ export function App() {
     ),
     safeScaffoldFileContentPreviewStale: Boolean(
       safeScaffoldFileContentPreview.saved?.stale,
+    ),
+    safeScaffoldWriteManifestPreviewExists: Boolean(
+      safeScaffoldWriteManifestPreview.saved &&
+        !safeScaffoldWriteManifestPreview.saved.stale,
+    ),
+    safeScaffoldWriteManifestPreviewStale: Boolean(
+      safeScaffoldWriteManifestPreview.saved?.stale,
     ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
@@ -8234,7 +8261,10 @@ export function App() {
       case "regenerate-safe-scaffold-file-tree-preview":
       case "generate-safe-scaffold-file-content-preview":
       case "review-safe-scaffold-file-content-preview":
-      case "regenerate-safe-scaffold-file-content-preview": {
+      case "regenerate-safe-scaffold-file-content-preview":
+      case "generate-safe-scaffold-write-manifest-preview":
+      case "review-safe-scaffold-write-manifest-preview":
+      case "regenerate-safe-scaffold-write-manifest-preview": {
         if (kind === "create-blueprint-before-scaffold") {
           await navigateOnly(
             "blueprint",
@@ -8246,33 +8276,43 @@ export function App() {
         const focusId =
           kind === "open-build-mode" || kind === "build-mode-planning-only"
             ? "build-mode-safety-charter"
-            : kind === "generate-safe-scaffold-file-content-preview" ||
-                kind === "review-safe-scaffold-file-content-preview" ||
-                kind === "regenerate-safe-scaffold-file-content-preview"
-              ? "build-mode-file-content-preview"
-              : kind === "generate-safe-scaffold-file-tree-preview" ||
-                  kind === "review-safe-scaffold-file-tree-preview" ||
-                  kind === "regenerate-safe-scaffold-file-tree-preview" ||
-                  kind === "safe-scaffold-target-ready"
-                ? "build-mode-file-tree-preview"
-                : "build-mode-target-folder";
+            : kind === "generate-safe-scaffold-write-manifest-preview" ||
+                kind === "review-safe-scaffold-write-manifest-preview" ||
+                kind === "regenerate-safe-scaffold-write-manifest-preview"
+              ? "build-mode-write-manifest-preview"
+              : kind === "generate-safe-scaffold-file-content-preview" ||
+                  kind === "review-safe-scaffold-file-content-preview" ||
+                  kind === "regenerate-safe-scaffold-file-content-preview"
+                ? "build-mode-file-content-preview"
+                : kind === "generate-safe-scaffold-file-tree-preview" ||
+                    kind === "review-safe-scaffold-file-tree-preview" ||
+                    kind === "regenerate-safe-scaffold-file-tree-preview" ||
+                    kind === "safe-scaffold-target-ready"
+                  ? "build-mode-file-tree-preview"
+                  : "build-mode-target-folder";
         await navigateOnly(
           "build",
           focusId,
-          kind === "review-safe-scaffold-file-content-preview"
-            ? "Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest."
-            : kind === "regenerate-safe-scaffold-file-content-preview"
-              ? "Regenerate Safe Scaffold File Content Preview."
-              : kind === "generate-safe-scaffold-file-content-preview"
-                ? "Generate Safe Scaffold File Content Preview."
-                : kind === "review-safe-scaffold-file-tree-preview"
-                  ? "Review the Safe Scaffold file tree, then generate file-content preview."
-                  : kind === "regenerate-safe-scaffold-file-tree-preview"
-                    ? "Regenerate Safe Scaffold File Tree Preview."
-                    : kind === "generate-safe-scaffold-file-tree-preview" ||
-                        kind === "safe-scaffold-target-ready"
-                      ? "Generate Safe Scaffold File Tree Preview."
-                      : "Select or review the Safe Scaffold target folder (readiness only).",
+          kind === "review-safe-scaffold-write-manifest-preview"
+            ? "Review the Safe Scaffold write manifest. The next stage can add final confirmation logic."
+            : kind === "regenerate-safe-scaffold-write-manifest-preview"
+              ? "Regenerate Safe Scaffold Write Manifest Preview."
+              : kind === "generate-safe-scaffold-write-manifest-preview"
+                ? "Generate Safe Scaffold Write Manifest Preview."
+                : kind === "review-safe-scaffold-file-content-preview"
+                  ? "Review the Safe Scaffold file contents, then generate write-manifest preview."
+                  : kind === "regenerate-safe-scaffold-file-content-preview"
+                    ? "Regenerate Safe Scaffold File Content Preview."
+                    : kind === "generate-safe-scaffold-file-content-preview"
+                      ? "Generate Safe Scaffold File Content Preview."
+                      : kind === "review-safe-scaffold-file-tree-preview"
+                        ? "Review the Safe Scaffold file tree, then generate file-content preview."
+                        : kind === "regenerate-safe-scaffold-file-tree-preview"
+                          ? "Regenerate Safe Scaffold File Tree Preview."
+                          : kind === "generate-safe-scaffold-file-tree-preview" ||
+                              kind === "safe-scaffold-target-ready"
+                            ? "Generate Safe Scaffold File Tree Preview."
+                            : "Select or review the Safe Scaffold target folder (readiness only).",
         );
         return;
       }
@@ -8852,6 +8892,7 @@ export function App() {
             safeScaffoldTarget={safeScaffoldTarget}
             safeScaffoldFileTreePreview={safeScaffoldFileTreePreview}
             safeScaffoldFileContentPreview={safeScaffoldFileContentPreview}
+            safeScaffoldWriteManifestPreview={safeScaffoldWriteManifestPreview}
             onOpenBlueprint={() => selectTab("blueprint")}
             onSelectTargetFolder={async () => {
               const next = await window.nttc.selectSafeScaffoldTargetFolder();
@@ -8912,6 +8953,32 @@ export function App() {
                 await window.nttc.logUiAction(
                   "warning",
                   "Copy Safe Scaffold file-content preview failed",
+                  "Clipboard write failed.",
+                );
+              }
+            }}
+            onGenerateWriteManifestPreview={async () => {
+              const next =
+                await window.nttc.generateSafeScaffoldWriteManifestPreview();
+              setSnapshot(next);
+            }}
+            onClearWriteManifestPreview={async () => {
+              const next =
+                await window.nttc.clearSafeScaffoldWriteManifestPreview();
+              setSnapshot(next);
+            }}
+            onCopyWriteManifestPreview={async () => {
+              const md = safeScaffoldWriteManifestPreview.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopySafeScaffoldWriteManifestPreview();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Safe Scaffold write-manifest preview failed",
                   "Clipboard write failed.",
                 );
               }

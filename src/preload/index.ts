@@ -262,6 +262,12 @@ const IPC_CHANNELS = {
     "nttc:clear-safe-scaffold-file-content-preview",
   recordCopySafeScaffoldFileContentPreview:
     "nttc:record-copy-safe-scaffold-file-content-preview",
+  generateSafeScaffoldWriteManifestPreview:
+    "nttc:generate-safe-scaffold-write-manifest-preview",
+  clearSafeScaffoldWriteManifestPreview:
+    "nttc:clear-safe-scaffold-write-manifest-preview",
+  recordCopySafeScaffoldWriteManifestPreview:
+    "nttc:record-copy-safe-scaffold-write-manifest-preview",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -1017,6 +1023,15 @@ const api: NttcApi = {
 
   recordCopySafeScaffoldFileContentPreview: (): Promise<AppSnapshot> =>
     ipcRenderer.invoke(IPC_CHANNELS.recordCopySafeScaffoldFileContentPreview),
+
+  generateSafeScaffoldWriteManifestPreview: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.generateSafeScaffoldWriteManifestPreview),
+
+  clearSafeScaffoldWriteManifestPreview: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearSafeScaffoldWriteManifestPreview),
+
+  recordCopySafeScaffoldWriteManifestPreview: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.recordCopySafeScaffoldWriteManifestPreview),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,

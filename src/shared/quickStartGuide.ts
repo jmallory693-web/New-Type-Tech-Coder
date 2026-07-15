@@ -78,6 +78,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Target folder safety checks are metadata-only. NTTC checks whether a future scaffold target appears empty/safe, but this stage still does not create files.",
       "Safe Scaffold File Tree Preview shows proposed relative file paths only. It does not generate contents or create files.",
       "Safe Scaffold File Content Preview shows deterministic starter contents in memory only. It does not create files or run package scripts.",
+      "Safe Scaffold Write Manifest Preview lists exactly which files a future write stage would create. It is preview-only and does not create files.",
     ],
   },
   {

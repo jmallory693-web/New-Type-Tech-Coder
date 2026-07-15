@@ -93,6 +93,9 @@ export type DailyNextActionKind =
   | "generate-safe-scaffold-file-content-preview"
   | "review-safe-scaffold-file-content-preview"
   | "regenerate-safe-scaffold-file-content-preview"
+  | "generate-safe-scaffold-write-manifest-preview"
+  | "review-safe-scaffold-write-manifest-preview"
+  | "regenerate-safe-scaffold-write-manifest-preview"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -196,6 +199,9 @@ export interface DailyNextActionInput {
   /** Stage 123: Safe Scaffold file-content preview (low priority). */
   safeScaffoldFileContentPreviewExists?: boolean;
   safeScaffoldFileContentPreviewStale?: boolean;
+  /** Stage 125: Safe Scaffold write-manifest preview (low priority). */
+  safeScaffoldWriteManifestPreviewExists?: boolean;
+  safeScaffoldWriteManifestPreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -353,9 +359,15 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
   "generate-safe-scaffold-file-content-preview":
     "Opens Build Mode to generate Safe Scaffold File Content Preview (templates in memory only).",
   "review-safe-scaffold-file-content-preview":
-    "Opens Build Mode so you can review Safe Scaffold file contents. Write confirmation comes later.",
+    "Opens Build Mode so you can review Safe Scaffold file contents before the write-manifest preview.",
   "regenerate-safe-scaffold-file-content-preview":
     "Opens Build Mode to regenerate a stale Safe Scaffold File Content Preview.",
+  "generate-safe-scaffold-write-manifest-preview":
+    "Opens Build Mode to generate Safe Scaffold Write Manifest Preview (preview only).",
+  "review-safe-scaffold-write-manifest-preview":
+    "Opens Build Mode so you can review the write manifest. Final confirmation comes later.",
+  "regenerate-safe-scaffold-write-manifest-preview":
+    "Opens Build Mode to regenerate a stale Safe Scaffold Write Manifest Preview.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1794,13 +1806,47 @@ export function calculateDailyNextAction(
           freshness,
         );
       }
+      const manifestExists = Boolean(
+        input.safeScaffoldWriteManifestPreviewExists,
+      );
+      const manifestStale = Boolean(
+        input.safeScaffoldWriteManifestPreviewStale,
+      );
+      if (manifestStale) {
+        return make(
+          "regenerate-safe-scaffold-write-manifest-preview",
+          "Regenerate Safe Scaffold Write Manifest Preview",
+          "Safe Scaffold Write Manifest Preview is stale. Regenerate after Blueprint, target-folder, file-tree, or file-content changes.",
+          button(
+            "Open Build Tab",
+            "regenerate-safe-scaffold-write-manifest-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
+      if (!manifestExists) {
+        return make(
+          "generate-safe-scaffold-write-manifest-preview",
+          "Generate Safe Scaffold Write Manifest Preview",
+          "Generate Safe Scaffold Write Manifest Preview.",
+          button(
+            "Open Build Tab",
+            "generate-safe-scaffold-write-manifest-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
       return make(
-        "review-safe-scaffold-file-content-preview",
-        "Review the Safe Scaffold file contents",
-        "Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest.",
+        "review-safe-scaffold-write-manifest-preview",
+        "Review the Safe Scaffold write manifest",
+        "Review the Safe Scaffold write manifest. The next stage can add final confirmation logic.",
         button(
           "Open Build Tab",
-          "review-safe-scaffold-file-content-preview",
+          "review-safe-scaffold-write-manifest-preview",
           "navigate",
         ),
         button("Open Blueprint Tab", "open-blueprint", "navigate"),

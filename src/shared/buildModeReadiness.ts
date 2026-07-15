@@ -1,5 +1,5 @@
 /**
- * Stage 117/119/121/123: Build Mode readiness helpers.
+ * Stage 117/119/121/123/125: Build Mode readiness helpers.
  * No IPC. No file writes.
  */
 
@@ -19,6 +19,10 @@ import {
   isSafeScaffoldFileContentPreviewCurrent,
   type SafeScaffoldFileContentPreviewState,
 } from "./buildModeFileContentPreview";
+import {
+  isSafeScaffoldWriteManifestPreviewCurrent,
+  type SafeScaffoldWriteManifestPreviewState,
+} from "./buildModeWriteManifestPreview";
 
 export type BuildModeBlueprintPresence = "ready" | "missing" | "incomplete";
 
@@ -36,6 +40,8 @@ export type BuildModeNextStepKind =
   | "regenerate-file-tree-preview"
   | "generate-file-contents-preview"
   | "regenerate-file-contents-preview"
+  | "generate-write-manifest-preview"
+  | "regenerate-write-manifest-preview"
   | "later-write-confirmation";
 
 export type BuildModeReadiness = {
@@ -55,6 +61,7 @@ export function deriveBuildModeReadiness(
   target?: SafeScaffoldTargetState | null,
   fileTree?: SafeScaffoldFileTreePreviewState | null,
   fileContent?: SafeScaffoldFileContentPreviewState | null,
+  writeManifest?: SafeScaffoldWriteManifestPreviewState | null,
 ): BuildModeReadiness {
   const status = blueprint?.status;
   const imported = Boolean(status?.blueprintImported);
@@ -75,6 +82,9 @@ export function deriveBuildModeReadiness(
   const fileTreeStale = Boolean(fileTree?.saved?.stale);
   const fileContentCurrent = isSafeScaffoldFileContentPreviewCurrent(fileContent);
   const fileContentStale = Boolean(fileContent?.saved?.stale);
+  const writeManifestCurrent =
+    isSafeScaffoldWriteManifestPreviewCurrent(writeManifest);
+  const writeManifestStale = Boolean(writeManifest?.saved?.stale);
 
   let blueprintPresence: BuildModeBlueprintPresence = "missing";
   if (imported) {
@@ -133,9 +143,23 @@ export function deriveBuildModeReadiness(
           nextStepText =
             "Next Step: Regenerate Safe Scaffold File Content Preview (preview is stale).";
         } else if (fileContentCurrent) {
-          nextStepKind = "later-write-confirmation";
-          nextStepText =
-            "Next Step: Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest.";
+          if (!writeManifest?.saved) {
+            nextStepKind = "generate-write-manifest-preview";
+            nextStepText =
+              "Next Step: Generate Safe Scaffold Write Manifest Preview (preview only — no files created).";
+          } else if (writeManifestStale) {
+            nextStepKind = "regenerate-write-manifest-preview";
+            nextStepText =
+              "Next Step: Regenerate Safe Scaffold Write Manifest Preview (preview is stale).";
+          } else if (writeManifestCurrent) {
+            nextStepKind = "later-write-confirmation";
+            nextStepText =
+              "Next Step: Review the Safe Scaffold write manifest. Next stage can add final confirmation logic.";
+          } else {
+            nextStepKind = "generate-write-manifest-preview";
+            nextStepText =
+              "Next Step: Generate Safe Scaffold Write Manifest Preview (preview only — no files created).";
+          }
         } else {
           nextStepKind = "generate-file-contents-preview";
           nextStepText =
@@ -171,8 +195,10 @@ export function deriveBuildModeReadiness(
       "target-folder-empty": targetConfirmedSafe,
       "file-tree-preview": fileTreeCurrent,
       "file-contents-preview": fileContentCurrent,
+      "written-files-manifest": writeManifestCurrent,
       "user-confirmed-write": false,
-      "written-files-manifest": false,
+      "actual-files-written": false,
+      "written-files-manifest-after-write": false,
     },
     nextStepKind,
     nextStepText,

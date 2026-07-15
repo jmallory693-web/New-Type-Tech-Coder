@@ -114,6 +114,9 @@ export interface WorkflowGuidanceInput {
   /** Stage 123: Safe Scaffold file-content preview. */
   safeScaffoldFileContentPreviewExists?: boolean;
   safeScaffoldFileContentPreviewStale?: boolean;
+  /** Stage 125: Safe Scaffold write-manifest preview. */
+  safeScaffoldWriteManifestPreviewExists?: boolean;
+  safeScaffoldWriteManifestPreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -259,6 +262,11 @@ function isCompleted(
         input.safeScaffoldFileContentPreviewExists &&
           !input.safeScaffoldFileContentPreviewStale,
       );
+    case "build-mode-write-manifest-preview":
+      return Boolean(
+        input.safeScaffoldWriteManifestPreviewExists &&
+          !input.safeScaffoldWriteManifestPreviewStale,
+      );
     default:
       return false;
   }
@@ -310,6 +318,12 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
       "build-mode-file-content-preview",
     "regenerate-safe-scaffold-file-content-preview":
       "build-mode-file-content-preview",
+    "generate-safe-scaffold-write-manifest-preview":
+      "build-mode-write-manifest-preview",
+    "review-safe-scaffold-write-manifest-preview":
+      "build-mode-write-manifest-preview",
+    "regenerate-safe-scaffold-write-manifest-preview":
+      "build-mode-write-manifest-preview",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -472,6 +486,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "File-content preview ready (templates in memory — no writes).";
       }
       return "Generate Safe Scaffold File Content Preview (deterministic templates).";
+    case "build-mode-write-manifest-preview":
+      if (input.safeScaffoldWriteManifestPreviewStale) {
+        return "Write-manifest preview is stale — regenerate.";
+      }
+      if (input.safeScaffoldWriteManifestPreviewExists) {
+        return "Write-manifest preview ready (preview only — no writes).";
+      }
+      return "Generate Safe Scaffold Write Manifest Preview (future write plan).";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -647,6 +669,11 @@ export function buildWorkflowProgress(
       id: "build-mode-file-content-preview",
       label: "Safe Scaffold File Content Preview",
       focusId: "build-mode-file-content-preview",
+    },
+    {
+      id: "build-mode-write-manifest-preview",
+      label: "Safe Scaffold Write Manifest Preview",
+      focusId: "build-mode-write-manifest-preview",
     },
   ];
 

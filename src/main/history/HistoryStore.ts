@@ -66,6 +66,7 @@ import type {
 import type { SafeScaffoldTargetRecord } from "../../shared/buildModeTargetSafety";
 import type { SafeScaffoldFileTreePreviewRecord } from "../../shared/buildModeFileTreePreview";
 import type { SafeScaffoldFileContentPreviewRecord } from "../../shared/buildModeFileContentPreview";
+import type { SafeScaffoldWriteManifestPreviewRecord } from "../../shared/buildModeWriteManifestPreview";
 import type { TaskImplementationBuilderSource } from "../../shared/taskImplementationIntakeConstants";
 import type { ArchitectureRefactorImplementationBuilderSource } from "../../shared/architectureRefactorTasks/architectureRefactorTaskImplementationIntakeConstants";
 import type { SafetyGate } from "../safety/SafetyGate";
@@ -266,6 +267,8 @@ function migrateProjectRecords(
       safeScaffoldFileTreePreview: record.safeScaffoldFileTreePreview ?? null,
       safeScaffoldFileContentPreview:
         record.safeScaffoldFileContentPreview ?? null,
+      safeScaffoldWriteManifestPreview:
+        record.safeScaffoldWriteManifestPreview ?? null,
       architectureRefactorTaskCards: record.architectureRefactorTaskCards ?? null,
       architectureRefactorTaskBuilderHandoff:
         record.architectureRefactorTaskBuilderHandoff ?? null,
@@ -588,6 +591,7 @@ export class HistoryStore {
     safeScaffoldTarget: SafeScaffoldTargetRecord | null;
     safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewRecord | null;
     safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewRecord | null;
+    safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -755,6 +759,7 @@ export class HistoryStore {
         safeScaffoldTarget: input.safeScaffoldTarget,
         safeScaffoldFileTreePreview: input.safeScaffoldFileTreePreview,
         safeScaffoldFileContentPreview: input.safeScaffoldFileContentPreview,
+        safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
         architectureRefactorTaskCards: input.architectureRefactorTaskCards,
         architectureRefactorTaskBuilderHandoff:
           input.architectureRefactorTaskBuilderHandoff,
@@ -959,6 +964,13 @@ export class HistoryStore {
           previous.safeScaffoldFileContentPreview;
       }
       if (
+        !record.safeScaffoldWriteManifestPreview &&
+        previous?.safeScaffoldWriteManifestPreview
+      ) {
+        record.safeScaffoldWriteManifestPreview =
+          previous.safeScaffoldWriteManifestPreview;
+      }
+      if (
         !record.architectureRefactorTaskCards &&
         previous?.architectureRefactorTaskCards
       ) {
@@ -1146,6 +1158,7 @@ export class HistoryStore {
     safeScaffoldTarget: SafeScaffoldTargetRecord | null;
     safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewRecord | null;
     safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewRecord | null;
+    safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -1763,6 +1776,7 @@ export class HistoryStore {
       safeScaffoldTarget: input.safeScaffoldTarget,
       safeScaffoldFileTreePreview: input.safeScaffoldFileTreePreview,
       safeScaffoldFileContentPreview: input.safeScaffoldFileContentPreview,
+      safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
       architectureRefactorTaskCards: input.architectureRefactorTaskCards,
       architectureRefactorTaskBuilderHandoff:
         input.architectureRefactorTaskBuilderHandoff,

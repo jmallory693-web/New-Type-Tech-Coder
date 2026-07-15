@@ -2,6 +2,7 @@ import type { BlueprintState } from "../../shared/types";
 import type { SafeScaffoldTargetState } from "../../shared/buildModeTargetSafety";
 import type { SafeScaffoldFileTreePreviewState } from "../../shared/buildModeFileTreePreview";
 import type { SafeScaffoldFileContentPreviewState } from "../../shared/buildModeFileContentPreview";
+import type { SafeScaffoldWriteManifestPreviewState } from "../../shared/buildModeWriteManifestPreview";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -26,13 +27,19 @@ import {
   SAFE_SCAFFOLD_FILE_CONTENT_PREVIEW_ONLY,
   SAFE_SCAFFOLD_FILE_CONTENT_UI_LABELS,
 } from "../../shared/buildModeFileContentPreview";
+import {
+  SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION,
+  SAFE_SCAFFOLD_WRITE_MANIFEST_PREVIEW_ONLY,
+  SAFE_SCAFFOLD_WRITE_MANIFEST_UI_LABELS,
+} from "../../shared/buildModeWriteManifestPreview";
 
-/** Stage 117–123: Build Mode — readiness + file-tree + file-content preview only. */
+/** Stage 117–125: Build Mode — readiness + tree/content/manifest preview only. */
 export function BuildModeTab({
   blueprint,
   safeScaffoldTarget,
   safeScaffoldFileTreePreview,
   safeScaffoldFileContentPreview,
+  safeScaffoldWriteManifestPreview,
   onOpenBlueprint,
   onSelectTargetFolder,
   onClearTargetFolder,
@@ -43,11 +50,15 @@ export function BuildModeTab({
   onGenerateFileContentPreview,
   onClearFileContentPreview,
   onCopyFileContentPreview,
+  onGenerateWriteManifestPreview,
+  onClearWriteManifestPreview,
+  onCopyWriteManifestPreview,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
   safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewState;
   safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewState;
+  safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewState;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
   onClearTargetFolder: () => void | Promise<void>;
@@ -58,12 +69,16 @@ export function BuildModeTab({
   onGenerateFileContentPreview: () => void | Promise<void>;
   onClearFileContentPreview: () => void | Promise<void>;
   onCopyFileContentPreview: () => void | Promise<void>;
+  onGenerateWriteManifestPreview: () => void | Promise<void>;
+  onClearWriteManifestPreview: () => void | Promise<void>;
+  onCopyWriteManifestPreview: () => void | Promise<void>;
 }) {
   const readiness = deriveBuildModeReadiness(
     blueprint,
     safeScaffoldTarget,
     safeScaffoldFileTreePreview,
     safeScaffoldFileContentPreview,
+    safeScaffoldWriteManifestPreview,
   );
   const uiLabel = SAFE_SCAFFOLD_TARGET_UI_LABELS[safeScaffoldTarget.uiStatus];
   const safetyLabel = folderSafetyLabel(safeScaffoldTarget);
@@ -82,7 +97,8 @@ export function BuildModeTab({
 
   const laterOnlyIds = new Set([
     "user-confirmed-write",
-    "written-files-manifest",
+    "actual-files-written",
+    "written-files-manifest-after-write",
   ]);
 
   const fileTreeUi =
@@ -99,14 +115,22 @@ export function BuildModeTab({
     !safeScaffoldFileContentPreview.busy &&
     safeScaffoldFileContentPreview.readinessBlockedReasons.length === 0;
 
+  const writeManifestUi =
+    SAFE_SCAFFOLD_WRITE_MANIFEST_UI_LABELS[
+      safeScaffoldWriteManifestPreview.uiStatus
+    ];
+  const canClickGenerateManifest =
+    !safeScaffoldWriteManifestPreview.busy &&
+    safeScaffoldWriteManifestPreview.readinessBlockedReasons.length === 0;
+
   return (
     <div className="tab-panel" role="tabpanel" aria-label="Build">
       <section className="panel">
         <div className="panel-header">
           <h2 className="panel-title">Safe Scaffold Mode</h2>
           <p className="panel-subtitle">
-            Target folder readiness, file-tree preview, and file-content preview
-            only. NTTC does not write files in this stage.
+            Target folder readiness, file-tree preview, file-content preview, and
+            write-manifest preview only. NTTC does not write files in this stage.
           </p>
         </div>
         <div className="panel-body stack">
@@ -513,6 +537,186 @@ export function BuildModeTab({
 
           <div className="section-divider" />
 
+          <div data-focus-id="build-mode-write-manifest-preview">
+            <div className="field-label">Safe Scaffold Write Manifest Preview</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              Deterministic future-write plan in memory only. No files are
+              created. Confirmation is not enabled yet.
+            </p>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => void onGenerateWriteManifestPreview()}
+                disabled={!canClickGenerateManifest}
+              >
+                Generate Write Manifest Preview
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyWriteManifestPreview()}
+                disabled={
+                  safeScaffoldWriteManifestPreview.busy ||
+                  !safeScaffoldWriteManifestPreview.saved?.markdown
+                }
+              >
+                Copy Write Manifest Preview
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearWriteManifestPreview()}
+                disabled={
+                  safeScaffoldWriteManifestPreview.busy ||
+                  !safeScaffoldWriteManifestPreview.saved
+                }
+              >
+                Clear Write Manifest Preview
+              </button>
+            </div>
+
+            <div
+              className="onedrive-warning"
+              role="status"
+              style={{ marginTop: "0.75rem" }}
+            >
+              <div className="field-label" style={{ marginBottom: "0.25rem" }}>
+                Write Manifest Preview Status
+              </div>
+              <div className="field-value">
+                <strong>{writeManifestUi}</strong>
+              </div>
+            </div>
+
+            {safeScaffoldWriteManifestPreview.readinessBlockedReasons.length >
+              0 && !safeScaffoldWriteManifestPreview.saved ? (
+              <div style={{ marginTop: "0.5rem" }}>
+                <div className="field-label">Not ready</div>
+                <ul className="workflow-list">
+                  {safeScaffoldWriteManifestPreview.readinessBlockedReasons.map(
+                    (reason) => (
+                      <li key={reason}>{reason}</li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            ) : null}
+
+            {safeScaffoldWriteManifestPreview.saved ? (
+              <>
+                <div className="field-value" style={{ marginTop: "0.5rem" }}>
+                  Generated:{" "}
+                  <strong>
+                    {safeScaffoldWriteManifestPreview.saved.generatedAt}
+                  </strong>
+                  {safeScaffoldWriteManifestPreview.saved.stale ? (
+                    <span className="muted"> (stale)</span>
+                  ) : null}
+                </div>
+                <div className="field-value">
+                  Ready to create:{" "}
+                  <strong>
+                    {
+                      safeScaffoldWriteManifestPreview.saved.readyToCreate
+                        .length
+                    }
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Not ready:{" "}
+                  <strong>
+                    {safeScaffoldWriteManifestPreview.saved.notReady.length}
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Target safety at generation:{" "}
+                  <strong>
+                    {
+                      safeScaffoldWriteManifestPreview.saved
+                        .sourceTargetSafetyStatus
+                    }
+                  </strong>
+                </div>
+                {safeScaffoldWriteManifestPreview.saved.warnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {safeScaffoldWriteManifestPreview.saved.warnings.map(
+                      (w) => (
+                        <li key={w}>{w}</li>
+                      ),
+                    )}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Preview markdown
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "28rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {safeScaffoldWriteManifestPreview.saved.markdown}
+                </pre>
+              </>
+            ) : (
+              <p className="field-value muted" style={{ marginTop: "0.5rem" }}>
+                {SAFE_SCAFFOLD_WRITE_MANIFEST_PREVIEW_ONLY}
+              </p>
+            )}
+            {safeScaffoldWriteManifestPreview.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {safeScaffoldWriteManifestPreview.statusMessage}
+              </p>
+            ) : null}
+
+            <div
+              className="onedrive-warning"
+              role="note"
+              style={{ marginTop: "0.75rem" }}
+            >
+              <div className="field-label" style={{ marginBottom: "0.35rem" }}>
+                Future Write Confirmation
+              </div>
+              <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                {SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION}
+              </p>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={false}
+                  disabled
+                  readOnly
+                  aria-disabled="true"
+                />
+                <span className="field-value muted" style={{ fontSize: "0.85rem" }}>
+                  I understand this future scaffold write would create new files
+                  only in the selected target folder. (Disabled until write
+                  stage)
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="section-divider" />
+
           <div>
             <div className="field-label">Safety Charter</div>
             <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
@@ -530,9 +734,9 @@ export function BuildModeTab({
           <div>
             <div className="field-label">Future Safe Scaffold Requirements</div>
             <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
-              Checklist reflects Blueprint, target-folder, file-tree, and
-              file-content preview readiness. No write actions are available
-              yet.
+              Checklist reflects Blueprint, target-folder, file-tree,
+              file-content, and write-manifest preview readiness. No write
+              actions are available yet.
             </p>
             <ul
               className="workflow-list"

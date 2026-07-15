@@ -1999,6 +1999,8 @@ export interface ProjectHistoryRecord {
   safeScaffoldFileTreePreview: import("./buildModeFileTreePreview").SafeScaffoldFileTreePreviewRecord | null;
   /** Stage 123: Safe Scaffold file-content preview (templates in memory only). */
   safeScaffoldFileContentPreview: import("./buildModeFileContentPreview").SafeScaffoldFileContentPreviewRecord | null;
+  /** Stage 125: Safe Scaffold write-manifest preview (future write plan only). */
+  safeScaffoldWriteManifestPreview: import("./buildModeWriteManifestPreview").SafeScaffoldWriteManifestPreviewRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2088,6 +2090,8 @@ export interface AppSnapshot {
   safeScaffoldFileTreePreview: import("./buildModeFileTreePreview").SafeScaffoldFileTreePreviewState;
   /** Stage 123: Safe Scaffold file-content preview (templates in memory; no writes). */
   safeScaffoldFileContentPreview: import("./buildModeFileContentPreview").SafeScaffoldFileContentPreviewState;
+  /** Stage 125: Safe Scaffold write-manifest preview (future write plan; no writes). */
+  safeScaffoldWriteManifestPreview: import("./buildModeWriteManifestPreview").SafeScaffoldWriteManifestPreviewState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2340,6 +2344,12 @@ export const IPC_CHANNELS = {
     "nttc:clear-safe-scaffold-file-content-preview",
   recordCopySafeScaffoldFileContentPreview:
     "nttc:record-copy-safe-scaffold-file-content-preview",
+  generateSafeScaffoldWriteManifestPreview:
+    "nttc:generate-safe-scaffold-write-manifest-preview",
+  clearSafeScaffoldWriteManifestPreview:
+    "nttc:clear-safe-scaffold-write-manifest-preview",
+  recordCopySafeScaffoldWriteManifestPreview:
+    "nttc:record-copy-safe-scaffold-write-manifest-preview",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2607,6 +2617,9 @@ export interface NttcApi {
   generateSafeScaffoldFileContentPreview: () => Promise<AppSnapshot>;
   clearSafeScaffoldFileContentPreview: () => Promise<AppSnapshot>;
   recordCopySafeScaffoldFileContentPreview: () => Promise<AppSnapshot>;
+  generateSafeScaffoldWriteManifestPreview: () => Promise<AppSnapshot>;
+  clearSafeScaffoldWriteManifestPreview: () => Promise<AppSnapshot>;
+  recordCopySafeScaffoldWriteManifestPreview: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,
