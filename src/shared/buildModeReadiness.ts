@@ -1,5 +1,5 @@
 /**
- * Stage 117/119/121/123/125/127: Build Mode readiness helpers.
+ * Stage 117/119/121/123/125/127/129: Build Mode readiness helpers.
  * No IPC. No file writes.
  */
 
@@ -27,6 +27,10 @@ import {
   isSafeScaffoldFinalConfirmationCurrent,
   type SafeScaffoldFinalConfirmationState,
 } from "./buildModeFinalConfirmation";
+import {
+  isSafeScaffoldWriteResultCurrent,
+  type SafeScaffoldWriteState,
+} from "./buildModeSafeScaffoldWrite";
 
 export type BuildModeBlueprintPresence = "ready" | "missing" | "incomplete";
 
@@ -48,7 +52,9 @@ export type BuildModeNextStepKind =
   | "regenerate-write-manifest-preview"
   | "record-final-confirmation"
   | "rerecord-final-confirmation"
-  | "later-guarded-write";
+  | "run-safe-scaffold-write"
+  | "review-written-scaffold"
+  | "resolve-write-blockers";
 
 export type BuildModeReadiness = {
   blueprintPresence: BuildModeBlueprintPresence;
@@ -69,6 +75,7 @@ export function deriveBuildModeReadiness(
   fileContent?: SafeScaffoldFileContentPreviewState | null,
   writeManifest?: SafeScaffoldWriteManifestPreviewState | null,
   finalConfirmation?: SafeScaffoldFinalConfirmationState | null,
+  scaffoldWrite?: SafeScaffoldWriteState | null,
 ): BuildModeReadiness {
   const status = blueprint?.status;
   const imported = Boolean(status?.blueprintImported);
@@ -95,6 +102,11 @@ export function deriveBuildModeReadiness(
   const finalConfirmationCurrent =
     isSafeScaffoldFinalConfirmationCurrent(finalConfirmation);
   const finalConfirmationStale = Boolean(finalConfirmation?.saved?.stale);
+  const writeResultCurrent = isSafeScaffoldWriteResultCurrent(scaffoldWrite);
+  const writeBlocked =
+    (scaffoldWrite?.readinessBlockedReasons?.length ?? 0) > 0 &&
+    finalConfirmationCurrent &&
+    !writeResultCurrent;
 
   let blueprintPresence: BuildModeBlueprintPresence = "missing";
   if (imported) {
@@ -171,9 +183,19 @@ export function deriveBuildModeReadiness(
               nextStepText =
                 "Next Step: Regenerate previews and record Safe Scaffold final confirmation again (confirmation is stale).";
             } else if (finalConfirmationCurrent) {
-              nextStepKind = "later-guarded-write";
-              nextStepText =
-                "Next Step: Safe Scaffold final confirmation is recorded. A later stage may add the first guarded write.";
+              if (writeResultCurrent) {
+                nextStepKind = "review-written-scaffold";
+                nextStepText =
+                  "Next Step: Review the written Safe Scaffold files in the target folder. NTTC did not run commands or install packages.";
+              } else if (writeBlocked) {
+                nextStepKind = "resolve-write-blockers";
+                nextStepText =
+                  "Next Step: Resolve Safe Scaffold write blockers before writing files.";
+              } else {
+                nextStepKind = "run-safe-scaffold-write";
+                nextStepText =
+                  "Next Step: Run Safe Scaffold Write (creates new files only after an immediate safety re-check — no overwrite, commands, or installs).";
+              }
             } else {
               nextStepKind = "record-final-confirmation";
               nextStepText =
@@ -221,8 +243,8 @@ export function deriveBuildModeReadiness(
       "file-contents-preview": fileContentCurrent,
       "written-files-manifest": writeManifestCurrent,
       "user-confirmed-write": finalConfirmationCurrent,
-      "actual-files-written": false,
-      "written-files-manifest-after-write": false,
+      "actual-files-written": writeResultCurrent,
+      "written-files-manifest-after-write": Boolean(scaffoldWrite?.saved),
     },
     nextStepKind,
     nextStepText,

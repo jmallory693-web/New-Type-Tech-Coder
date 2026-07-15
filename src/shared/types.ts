@@ -2003,6 +2003,8 @@ export interface ProjectHistoryRecord {
   safeScaffoldWriteManifestPreview: import("./buildModeWriteManifestPreview").SafeScaffoldWriteManifestPreviewRecord | null;
   /** Stage 127: Safe Scaffold final confirmation (readiness only — no writes). */
   safeScaffoldFinalConfirmation: import("./buildModeFinalConfirmation").SafeScaffoldFinalConfirmationRecord | null;
+  /** Stage 129: Safe Scaffold write result metadata (created paths only). */
+  safeScaffoldWriteResult: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteResultRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2096,6 +2098,8 @@ export interface AppSnapshot {
   safeScaffoldWriteManifestPreview: import("./buildModeWriteManifestPreview").SafeScaffoldWriteManifestPreviewState;
   /** Stage 127: Safe Scaffold final confirmation (readiness only; no writes). */
   safeScaffoldFinalConfirmation: import("./buildModeFinalConfirmation").SafeScaffoldFinalConfirmationState;
+  /** Stage 129: Safe Scaffold write (guarded create-only). */
+  safeScaffoldWrite: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2360,6 +2364,12 @@ export const IPC_CHANNELS = {
     "nttc:clear-safe-scaffold-final-confirmation",
   recordCopySafeScaffoldFinalConfirmation:
     "nttc:record-copy-safe-scaffold-final-confirmation",
+  recheckSafeScaffoldWriteReadiness:
+    "nttc:recheck-safe-scaffold-write-readiness",
+  writeSafeScaffoldFiles: "nttc:write-safe-scaffold-files",
+  clearSafeScaffoldWriteResult: "nttc:clear-safe-scaffold-write-result",
+  recordCopySafeScaffoldWriteResult:
+    "nttc:record-copy-safe-scaffold-write-result",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2637,6 +2647,10 @@ export interface NttcApi {
   }) => Promise<AppSnapshot>;
   clearSafeScaffoldFinalConfirmation: () => Promise<AppSnapshot>;
   recordCopySafeScaffoldFinalConfirmation: () => Promise<AppSnapshot>;
+  recheckSafeScaffoldWriteReadiness: () => Promise<AppSnapshot>;
+  writeSafeScaffoldFiles: () => Promise<AppSnapshot>;
+  clearSafeScaffoldWriteResult: () => Promise<AppSnapshot>;
+  recordCopySafeScaffoldWriteResult: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,

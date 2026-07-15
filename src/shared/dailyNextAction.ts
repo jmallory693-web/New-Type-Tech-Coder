@@ -99,6 +99,9 @@ export type DailyNextActionKind =
   | "record-safe-scaffold-final-confirmation"
   | "rerecord-safe-scaffold-final-confirmation"
   | "safe-scaffold-final-confirmation-recorded"
+  | "run-safe-scaffold-write"
+  | "resolve-safe-scaffold-write-blockers"
+  | "review-written-safe-scaffold-files"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -208,6 +211,10 @@ export interface DailyNextActionInput {
   /** Stage 127: Safe Scaffold final confirmation (low priority). */
   safeScaffoldFinalConfirmationExists?: boolean;
   safeScaffoldFinalConfirmationStale?: boolean;
+  /** Stage 129: Safe Scaffold write result (low priority). */
+  safeScaffoldWriteResultExists?: boolean;
+  safeScaffoldWriteCanWrite?: boolean;
+  safeScaffoldWriteBlocked?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -379,7 +386,13 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
   "rerecord-safe-scaffold-final-confirmation":
     "Opens Build Mode to regenerate previews and record Safe Scaffold final confirmation again.",
   "safe-scaffold-final-confirmation-recorded":
-    "Opens Build Mode to review recorded final confirmation. The next stage can add the first guarded write.",
+    "Opens Build Mode so you can run the guarded Safe Scaffold write when the target is still Safe.",
+  "run-safe-scaffold-write":
+    "Opens Build Mode to run Write Safe Scaffold Files after an immediate safety re-check.",
+  "resolve-safe-scaffold-write-blockers":
+    "Opens Build Mode to resolve Safe Scaffold write blockers.",
+  "review-written-safe-scaffold-files":
+    "Opens Build Mode to review the written scaffold result. NTTC did not run commands or install packages.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1886,15 +1899,42 @@ export function calculateDailyNextAction(
           freshness,
         );
       }
+      const writeResultExists = Boolean(input.safeScaffoldWriteResultExists);
+      const writeCanWrite = Boolean(input.safeScaffoldWriteCanWrite);
+      const writeBlocked = Boolean(input.safeScaffoldWriteBlocked);
+      if (writeResultExists) {
+        return make(
+          "review-written-safe-scaffold-files",
+          "Review the written scaffold files in the target folder",
+          "Review the written scaffold files in the target folder. NTTC did not run commands or install packages.",
+          button(
+            "Open Build Tab",
+            "review-written-safe-scaffold-files",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
+      if (writeBlocked && !writeCanWrite) {
+        return make(
+          "resolve-safe-scaffold-write-blockers",
+          "Resolve the Safe Scaffold write blockers before trying again",
+          "Resolve the Safe Scaffold write blockers before trying again.",
+          button(
+            "Open Build Tab",
+            "resolve-safe-scaffold-write-blockers",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
       return make(
-        "safe-scaffold-final-confirmation-recorded",
-        "Safe Scaffold final confirmation is recorded",
-        "Safe Scaffold final confirmation is recorded. The next stage can add the first guarded write.",
-        button(
-          "Open Build Tab",
-          "safe-scaffold-final-confirmation-recorded",
-          "navigate",
-        ),
+        "run-safe-scaffold-write",
+        "Run the final Safe Scaffold write only if the target folder is still Safe",
+        "Run the final Safe Scaffold write only if the target folder is still Safe.",
+        button("Open Build Tab", "run-safe-scaffold-write", "navigate"),
         button("Open Blueprint Tab", "open-blueprint", "navigate"),
         freshness,
       );

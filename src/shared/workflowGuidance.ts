@@ -120,6 +120,8 @@ export interface WorkflowGuidanceInput {
   /** Stage 127: Safe Scaffold final confirmation. */
   safeScaffoldFinalConfirmationExists?: boolean;
   safeScaffoldFinalConfirmationStale?: boolean;
+  /** Stage 129: Safe Scaffold write result. */
+  safeScaffoldWriteResultExists?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -275,6 +277,8 @@ function isCompleted(
         input.safeScaffoldFinalConfirmationExists &&
           !input.safeScaffoldFinalConfirmationStale,
       );
+    case "build-mode-safe-scaffold-write":
+      return Boolean(input.safeScaffoldWriteResultExists);
     default:
       return false;
   }
@@ -335,6 +339,9 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "record-safe-scaffold-final-confirmation": "build-mode-final-confirmation",
     "rerecord-safe-scaffold-final-confirmation": "build-mode-final-confirmation",
     "safe-scaffold-final-confirmation-recorded": "build-mode-final-confirmation",
+    "run-safe-scaffold-write": "build-mode-safe-scaffold-write",
+    "resolve-safe-scaffold-write-blockers": "build-mode-safe-scaffold-write",
+    "review-written-safe-scaffold-files": "build-mode-safe-scaffold-write",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -513,6 +520,11 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Final confirmation recorded (readiness only — no writes).";
       }
       return "Record Safe Scaffold Final Confirmation (readiness only).";
+    case "build-mode-safe-scaffold-write":
+      if (input.safeScaffoldWriteResultExists) {
+        return "Safe Scaffold files written (no commands / no installs).";
+      }
+      return "Write Safe Scaffold Files after final confirmation + Safe re-check.";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -698,6 +710,11 @@ export function buildWorkflowProgress(
       id: "build-mode-final-confirmation",
       label: "Safe Scaffold Final Confirmation",
       focusId: "build-mode-final-confirmation",
+    },
+    {
+      id: "build-mode-safe-scaffold-write",
+      label: "Safe Scaffold Files Written",
+      focusId: "build-mode-safe-scaffold-write",
     },
   ];
 

@@ -423,9 +423,9 @@ check("UI has Review Final Confirmation", /Review Final Confirmation/.test(tabSr
 check("UI has Clear Final Confirmation", /Clear Final Confirmation/.test(tabSrc));
 check("UI has Copy Confirmation Summary", /Copy Confirmation Summary/.test(tabSrc));
 check(
-  "UI has disabled Write Files",
-  /SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL/.test(tabSrc) &&
-    /Write Files — Disabled until next stage/.test(sharedConfirm),
+  "UI has Write Safe Scaffold Files",
+  /SAFE_SCAFFOLD_WRITE_BUTTON_LABEL/.test(tabSrc) ||
+    /Write Safe Scaffold Files/.test(tabSrc),
 );
 check(
   "UI no Create Files button",

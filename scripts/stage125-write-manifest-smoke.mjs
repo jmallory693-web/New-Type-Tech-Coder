@@ -260,7 +260,8 @@ check(
   "UI has Final Confirmation section",
   /Safe Scaffold Final Confirmation/i.test(tab) &&
     /Review Final Confirmation/i.test(tab) &&
-    /SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL/.test(tab),
+    (/SAFE_SCAFFOLD_WRITE_BUTTON_LABEL/.test(tab) ||
+      /Write Safe Scaffold Files/.test(tab)),
 );
 
 const guide = fs.readFileSync(GUIDE, "utf8");

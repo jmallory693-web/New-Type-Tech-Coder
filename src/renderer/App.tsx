@@ -601,6 +601,16 @@ const emptySafeScaffoldFinalConfirmation = {
   requiresCautionAck: false,
 };
 
+const emptySafeScaffoldWrite = {
+  saved: null,
+  busy: false,
+  statusMessage:
+    "Write Safe Scaffold Files only after a current Safe target, previews, and Final Confirmation. Stage 129 requires Safe (not Caution).",
+  uiStatus: "not-ready" as const,
+  readinessBlockedReasons: [] as string[],
+  canWrite: false,
+};
+
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
   statusMessage:
@@ -738,6 +748,7 @@ const emptySnapshot: AppSnapshot = {
   safeScaffoldFileContentPreview: emptySafeScaffoldFileContentPreview,
   safeScaffoldWriteManifestPreview: emptySafeScaffoldWriteManifestPreview,
   safeScaffoldFinalConfirmation: emptySafeScaffoldFinalConfirmation,
+  safeScaffoldWrite: emptySafeScaffoldWrite,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4747,6 +4758,8 @@ export function App() {
   const safeScaffoldFinalConfirmation =
     snapshot.safeScaffoldFinalConfirmation ??
     emptySafeScaffoldFinalConfirmation;
+  const safeScaffoldWrite =
+    snapshot.safeScaffoldWrite ?? emptySafeScaffoldWrite;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5099,6 +5112,18 @@ export function App() {
     safeScaffoldFinalConfirmationStale: Boolean(
       safeScaffoldFinalConfirmation.saved?.stale,
     ),
+    safeScaffoldWriteResultExists: Boolean(safeScaffoldWrite.saved),
+    safeScaffoldWriteCanWrite: Boolean(safeScaffoldWrite.canWrite),
+    safeScaffoldWriteBlocked: Boolean(
+      safeScaffoldFinalConfirmation.saved &&
+        !safeScaffoldFinalConfirmation.saved.stale &&
+        !(
+          safeScaffoldWrite.saved &&
+          !safeScaffoldWrite.saved.stale &&
+          safeScaffoldWrite.saved.createdRelativePaths.length > 0
+        ) &&
+        safeScaffoldWrite.readinessBlockedReasons.length > 0,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5190,6 +5215,18 @@ export function App() {
     ),
     safeScaffoldFinalConfirmationStale: Boolean(
       safeScaffoldFinalConfirmation.saved?.stale,
+    ),
+    safeScaffoldWriteResultExists: Boolean(safeScaffoldWrite.saved),
+    safeScaffoldWriteCanWrite: Boolean(safeScaffoldWrite.canWrite),
+    safeScaffoldWriteBlocked: Boolean(
+      safeScaffoldFinalConfirmation.saved &&
+        !safeScaffoldFinalConfirmation.saved.stale &&
+        !(
+          safeScaffoldWrite.saved &&
+          !safeScaffoldWrite.saved.stale &&
+          safeScaffoldWrite.saved.createdRelativePaths.length > 0
+        ) &&
+        safeScaffoldWrite.readinessBlockedReasons.length > 0,
     ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
@@ -8295,7 +8332,10 @@ export function App() {
       case "regenerate-safe-scaffold-write-manifest-preview":
       case "record-safe-scaffold-final-confirmation":
       case "rerecord-safe-scaffold-final-confirmation":
-      case "safe-scaffold-final-confirmation-recorded": {
+      case "safe-scaffold-final-confirmation-recorded":
+      case "run-safe-scaffold-write":
+      case "resolve-safe-scaffold-write-blockers":
+      case "review-written-safe-scaffold-files": {
         if (kind === "create-blueprint-before-scaffold") {
           await navigateOnly(
             "blueprint",
@@ -8307,53 +8347,63 @@ export function App() {
         const focusId =
           kind === "open-build-mode" || kind === "build-mode-planning-only"
             ? "build-mode-safety-charter"
-            : kind === "record-safe-scaffold-final-confirmation" ||
-                kind === "rerecord-safe-scaffold-final-confirmation" ||
-                kind === "safe-scaffold-final-confirmation-recorded"
-              ? "build-mode-final-confirmation"
-              : kind === "generate-safe-scaffold-write-manifest-preview" ||
-                  kind === "review-safe-scaffold-write-manifest-preview" ||
-                  kind === "regenerate-safe-scaffold-write-manifest-preview"
-                ? "build-mode-write-manifest-preview"
-                : kind === "generate-safe-scaffold-file-content-preview" ||
-                    kind === "review-safe-scaffold-file-content-preview" ||
-                    kind === "regenerate-safe-scaffold-file-content-preview"
-                  ? "build-mode-file-content-preview"
-                  : kind === "generate-safe-scaffold-file-tree-preview" ||
-                      kind === "review-safe-scaffold-file-tree-preview" ||
-                      kind === "regenerate-safe-scaffold-file-tree-preview" ||
-                      kind === "safe-scaffold-target-ready"
-                    ? "build-mode-file-tree-preview"
-                    : "build-mode-target-folder";
+            : kind === "run-safe-scaffold-write" ||
+                kind === "resolve-safe-scaffold-write-blockers" ||
+                kind === "review-written-safe-scaffold-files"
+              ? "build-mode-safe-scaffold-write"
+              : kind === "record-safe-scaffold-final-confirmation" ||
+                  kind === "rerecord-safe-scaffold-final-confirmation" ||
+                  kind === "safe-scaffold-final-confirmation-recorded"
+                ? "build-mode-final-confirmation"
+                : kind === "generate-safe-scaffold-write-manifest-preview" ||
+                    kind === "review-safe-scaffold-write-manifest-preview" ||
+                    kind === "regenerate-safe-scaffold-write-manifest-preview"
+                  ? "build-mode-write-manifest-preview"
+                  : kind === "generate-safe-scaffold-file-content-preview" ||
+                      kind === "review-safe-scaffold-file-content-preview" ||
+                      kind === "regenerate-safe-scaffold-file-content-preview"
+                    ? "build-mode-file-content-preview"
+                    : kind === "generate-safe-scaffold-file-tree-preview" ||
+                        kind === "review-safe-scaffold-file-tree-preview" ||
+                        kind === "regenerate-safe-scaffold-file-tree-preview" ||
+                        kind === "safe-scaffold-target-ready"
+                      ? "build-mode-file-tree-preview"
+                      : "build-mode-target-folder";
         await navigateOnly(
           "build",
           focusId,
-          kind === "safe-scaffold-final-confirmation-recorded"
-            ? "Safe Scaffold final confirmation is recorded. The next stage can add the first guarded write."
-            : kind === "rerecord-safe-scaffold-final-confirmation"
-              ? "Regenerate previews and record Safe Scaffold final confirmation again."
-              : kind === "record-safe-scaffold-final-confirmation"
-                ? "Review and record Safe Scaffold final confirmation."
-                : kind === "review-safe-scaffold-write-manifest-preview"
-                  ? "Review the Safe Scaffold write manifest, then record final confirmation."
-                  : kind === "regenerate-safe-scaffold-write-manifest-preview"
-                    ? "Regenerate Safe Scaffold Write Manifest Preview."
-                    : kind === "generate-safe-scaffold-write-manifest-preview"
-                      ? "Generate Safe Scaffold Write Manifest Preview."
-                      : kind === "review-safe-scaffold-file-content-preview"
-                        ? "Review the Safe Scaffold file contents, then generate write-manifest preview."
-                        : kind === "regenerate-safe-scaffold-file-content-preview"
-                          ? "Regenerate Safe Scaffold File Content Preview."
-                          : kind === "generate-safe-scaffold-file-content-preview"
-                            ? "Generate Safe Scaffold File Content Preview."
-                            : kind === "review-safe-scaffold-file-tree-preview"
-                              ? "Review the Safe Scaffold file tree, then generate file-content preview."
-                              : kind === "regenerate-safe-scaffold-file-tree-preview"
-                                ? "Regenerate Safe Scaffold File Tree Preview."
-                                : kind === "generate-safe-scaffold-file-tree-preview" ||
-                                    kind === "safe-scaffold-target-ready"
-                                  ? "Generate Safe Scaffold File Tree Preview."
-                                  : "Select or review the Safe Scaffold target folder (readiness only).",
+          kind === "review-written-safe-scaffold-files"
+            ? "Review the written Safe Scaffold files in the target folder."
+            : kind === "resolve-safe-scaffold-write-blockers"
+              ? "Resolve Safe Scaffold write blockers before writing files."
+              : kind === "run-safe-scaffold-write"
+                ? "Run Safe Scaffold Write when the target is still Safe."
+                : kind === "safe-scaffold-final-confirmation-recorded"
+                  ? "Safe Scaffold final confirmation is recorded. Proceed to Safe Scaffold Write when ready."
+                  : kind === "rerecord-safe-scaffold-final-confirmation"
+                    ? "Regenerate previews and record Safe Scaffold final confirmation again."
+                    : kind === "record-safe-scaffold-final-confirmation"
+                      ? "Review and record Safe Scaffold final confirmation."
+                      : kind === "review-safe-scaffold-write-manifest-preview"
+                        ? "Review the Safe Scaffold write manifest, then record final confirmation."
+                        : kind === "regenerate-safe-scaffold-write-manifest-preview"
+                          ? "Regenerate Safe Scaffold Write Manifest Preview."
+                          : kind === "generate-safe-scaffold-write-manifest-preview"
+                            ? "Generate Safe Scaffold Write Manifest Preview."
+                            : kind === "review-safe-scaffold-file-content-preview"
+                              ? "Review the Safe Scaffold file contents, then generate write-manifest preview."
+                              : kind === "regenerate-safe-scaffold-file-content-preview"
+                                ? "Regenerate Safe Scaffold File Content Preview."
+                                : kind === "generate-safe-scaffold-file-content-preview"
+                                  ? "Generate Safe Scaffold File Content Preview."
+                                  : kind === "review-safe-scaffold-file-tree-preview"
+                                    ? "Review the Safe Scaffold file tree, then generate file-content preview."
+                                    : kind === "regenerate-safe-scaffold-file-tree-preview"
+                                      ? "Regenerate Safe Scaffold File Tree Preview."
+                                      : kind === "generate-safe-scaffold-file-tree-preview" ||
+                                          kind === "safe-scaffold-target-ready"
+                                        ? "Generate Safe Scaffold File Tree Preview."
+                                        : "Select or review the Safe Scaffold target folder (readiness only).",
         );
         return;
       }
@@ -8935,6 +8985,7 @@ export function App() {
             safeScaffoldFileContentPreview={safeScaffoldFileContentPreview}
             safeScaffoldWriteManifestPreview={safeScaffoldWriteManifestPreview}
             safeScaffoldFinalConfirmation={safeScaffoldFinalConfirmation}
+            safeScaffoldWrite={safeScaffoldWrite}
             onOpenBlueprint={() => selectTab("blueprint")}
             onSelectTargetFolder={async () => {
               const next = await window.nttc.selectSafeScaffoldTargetFolder();
@@ -9047,6 +9098,34 @@ export function App() {
                 await window.nttc.logUiAction(
                   "warning",
                   "Copy Safe Scaffold final confirmation failed",
+                  "Clipboard write failed.",
+                );
+              }
+            }}
+            onRecheckWriteReadiness={async () => {
+              const next = await window.nttc.recheckSafeScaffoldWriteReadiness();
+              setSnapshot(next);
+            }}
+            onWriteSafeScaffoldFiles={async () => {
+              const next = await window.nttc.writeSafeScaffoldFiles();
+              setSnapshot(next);
+            }}
+            onClearWriteResult={async () => {
+              const next = await window.nttc.clearSafeScaffoldWriteResult();
+              setSnapshot(next);
+            }}
+            onCopyWriteResult={async () => {
+              const md = safeScaffoldWrite.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopySafeScaffoldWriteResult();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Safe Scaffold write result failed",
                   "Clipboard write failed.",
                 );
               }

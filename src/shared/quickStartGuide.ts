@@ -80,6 +80,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Safe Scaffold File Content Preview shows deterministic starter contents in memory only. It does not create files or run package scripts.",
       "Safe Scaffold Write Manifest Preview lists exactly which files a future write stage would create. It is preview-only and does not create files.",
       "Safe Scaffold Final Confirmation records readiness for a future write stage. It still does not create files.",
+      "Safe Scaffold Write creates new files only after final confirmation and an immediate safety re-check. It never overwrites files, runs commands, installs packages, or applies patches.",
     ],
   },
   {

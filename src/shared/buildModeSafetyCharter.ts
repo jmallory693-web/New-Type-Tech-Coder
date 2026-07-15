@@ -83,7 +83,7 @@ export const FUTURE_SAFE_SCAFFOLD_REQUIREMENTS = [
   },
   {
     id: "written-files-manifest-after-write",
-    label: "Written-files manifest after write",
+    label: "Written-files result recorded",
   },
 ] as const;
 
