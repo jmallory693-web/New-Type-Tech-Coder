@@ -39,7 +39,7 @@ export const SAFE_SCAFFOLD_WRITE_MANIFEST_CAUTION_WARNING =
   "Target folder is Caution, not Safe. Future write stages should require stronger confirmation or an empty folder.";
 
 export const SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION =
-  "Future write confirmation is not enabled yet. A later stage will require explicit user confirmation before any file is created.";
+  "After this write-manifest preview, record Safe Scaffold Final Confirmation below. Confirmation is readiness-only and still does not create files.";
 
 export const SAFE_SCAFFOLD_WRITE_MANIFEST_REQUIRED_CONFIRMATION =
   "I understand NTTC will create new scaffold files in the selected empty/safe target folder and will not run commands or install packages.";

@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import type { BlueprintState } from "../../shared/types";
 import type { SafeScaffoldTargetState } from "../../shared/buildModeTargetSafety";
 import type { SafeScaffoldFileTreePreviewState } from "../../shared/buildModeFileTreePreview";
 import type { SafeScaffoldFileContentPreviewState } from "../../shared/buildModeFileContentPreview";
 import type { SafeScaffoldWriteManifestPreviewState } from "../../shared/buildModeWriteManifestPreview";
+import type { SafeScaffoldFinalConfirmationState } from "../../shared/buildModeFinalConfirmation";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -28,18 +30,28 @@ import {
   SAFE_SCAFFOLD_FILE_CONTENT_UI_LABELS,
 } from "../../shared/buildModeFileContentPreview";
 import {
-  SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION,
   SAFE_SCAFFOLD_WRITE_MANIFEST_PREVIEW_ONLY,
   SAFE_SCAFFOLD_WRITE_MANIFEST_UI_LABELS,
 } from "../../shared/buildModeWriteManifestPreview";
+import {
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_BOUNDARIES,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_CAUTION,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_STAGE127,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_RECORDED,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_STALE_MESSAGE,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_STILL_DISABLED,
+  SAFE_SCAFFOLD_FINAL_CONFIRMATION_UI_LABELS,
+  SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL,
+} from "../../shared/buildModeFinalConfirmation";
 
-/** Stage 117–125: Build Mode — readiness + tree/content/manifest preview only. */
+/** Stage 117–127: Build Mode — readiness + previews + final confirmation gate only. */
 export function BuildModeTab({
   blueprint,
   safeScaffoldTarget,
   safeScaffoldFileTreePreview,
   safeScaffoldFileContentPreview,
   safeScaffoldWriteManifestPreview,
+  safeScaffoldFinalConfirmation,
   onOpenBlueprint,
   onSelectTargetFolder,
   onClearTargetFolder,
@@ -53,12 +65,16 @@ export function BuildModeTab({
   onGenerateWriteManifestPreview,
   onClearWriteManifestPreview,
   onCopyWriteManifestPreview,
+  onRecordFinalConfirmation,
+  onClearFinalConfirmation,
+  onCopyFinalConfirmation,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
   safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewState;
   safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewState;
   safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewState;
+  safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationState;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
   onClearTargetFolder: () => void | Promise<void>;
@@ -72,6 +88,13 @@ export function BuildModeTab({
   onGenerateWriteManifestPreview: () => void | Promise<void>;
   onClearWriteManifestPreview: () => void | Promise<void>;
   onCopyWriteManifestPreview: () => void | Promise<void>;
+  onRecordFinalConfirmation: (acks: {
+    futureWriteBoundaries: boolean;
+    stage127NoWrite: boolean;
+    cautionTarget: boolean;
+  }) => void | Promise<void>;
+  onClearFinalConfirmation: () => void | Promise<void>;
+  onCopyFinalConfirmation: () => void | Promise<void>;
 }) {
   const readiness = deriveBuildModeReadiness(
     blueprint,
@@ -79,6 +102,7 @@ export function BuildModeTab({
     safeScaffoldFileTreePreview,
     safeScaffoldFileContentPreview,
     safeScaffoldWriteManifestPreview,
+    safeScaffoldFinalConfirmation,
   );
   const uiLabel = SAFE_SCAFFOLD_TARGET_UI_LABELS[safeScaffoldTarget.uiStatus];
   const safetyLabel = folderSafetyLabel(safeScaffoldTarget);
@@ -96,7 +120,6 @@ export function BuildModeTab({
     : "none";
 
   const laterOnlyIds = new Set([
-    "user-confirmed-write",
     "actual-files-written",
     "written-files-manifest-after-write",
   ]);
@@ -123,14 +146,54 @@ export function BuildModeTab({
     !safeScaffoldWriteManifestPreview.busy &&
     safeScaffoldWriteManifestPreview.readinessBlockedReasons.length === 0;
 
+  const finalConfirmationUi =
+    SAFE_SCAFFOLD_FINAL_CONFIRMATION_UI_LABELS[
+      safeScaffoldFinalConfirmation.uiStatus
+    ];
+  const confirmationPreconditionsMet =
+    !safeScaffoldFinalConfirmation.busy &&
+    safeScaffoldFinalConfirmation.readinessBlockedReasons.length === 0;
+  const confirmationLocked =
+    Boolean(safeScaffoldFinalConfirmation.saved) &&
+    !safeScaffoldFinalConfirmation.saved?.stale;
+
+  const [ackBoundaries, setAckBoundaries] = useState(false);
+  const [ackStage127, setAckStage127] = useState(false);
+  const [ackCaution, setAckCaution] = useState(false);
+
+  useEffect(() => {
+    const saved = safeScaffoldFinalConfirmation.saved;
+    if (saved && !saved.stale) {
+      setAckBoundaries(saved.acknowledgements.futureWriteBoundaries);
+      setAckStage127(saved.acknowledgements.stage127NoWrite);
+      setAckCaution(saved.acknowledgements.cautionTarget);
+      return;
+    }
+    setAckBoundaries(false);
+    setAckStage127(false);
+    setAckCaution(false);
+  }, [
+    safeScaffoldFinalConfirmation.saved?.confirmedAt,
+    safeScaffoldFinalConfirmation.saved?.stale,
+    safeScaffoldFinalConfirmation.saved,
+  ]);
+
+  const requiresCautionAck = safeScaffoldFinalConfirmation.requiresCautionAck;
+  const acksComplete =
+    ackBoundaries &&
+    ackStage127 &&
+    (!requiresCautionAck || ackCaution);
+  const canClickRecord =
+    confirmationPreconditionsMet && acksComplete && !confirmationLocked;
+
   return (
     <div className="tab-panel" role="tabpanel" aria-label="Build">
       <section className="panel">
         <div className="panel-header">
           <h2 className="panel-title">Safe Scaffold Mode</h2>
           <p className="panel-subtitle">
-            Target folder readiness, file-tree preview, file-content preview, and
-            write-manifest preview only. NTTC does not write files in this stage.
+            Target folder readiness, previews, write-manifest preview, and final
+            confirmation gate only. NTTC does not write files in this stage.
           </p>
         </div>
         <div className="panel-body stack">
@@ -541,7 +604,7 @@ export function BuildModeTab({
             <div className="field-label">Safe Scaffold Write Manifest Preview</div>
             <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
               Deterministic future-write plan in memory only. No files are
-              created. Confirmation is not enabled yet.
+              created. Record final confirmation in the section below.
             </p>
             <div
               style={{
@@ -679,6 +742,112 @@ export function BuildModeTab({
                 {safeScaffoldWriteManifestPreview.statusMessage}
               </p>
             ) : null}
+          </div>
+
+          <div className="section-divider" />
+
+          <div data-focus-id="build-mode-final-confirmation">
+            <div className="field-label">Safe Scaffold Final Confirmation</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              Explicit readiness gate for a future write stage. Recording
+              confirmation does not create files.
+            </p>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() =>
+                  void onRecordFinalConfirmation({
+                    futureWriteBoundaries: ackBoundaries,
+                    stage127NoWrite: ackStage127,
+                    cautionTarget: ackCaution,
+                  })
+                }
+                disabled={!canClickRecord}
+              >
+                Review Final Confirmation
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyFinalConfirmation()}
+                disabled={
+                  safeScaffoldFinalConfirmation.busy ||
+                  !safeScaffoldFinalConfirmation.saved?.markdown
+                }
+              >
+                Copy Confirmation Summary
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearFinalConfirmation()}
+                disabled={
+                  safeScaffoldFinalConfirmation.busy ||
+                  !safeScaffoldFinalConfirmation.saved
+                }
+              >
+                Clear Final Confirmation
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                disabled
+                title={SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL}
+              >
+                {SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL}
+              </button>
+            </div>
+
+            <div
+              className="onedrive-warning"
+              role="status"
+              style={{ marginTop: "0.75rem" }}
+            >
+              <div className="field-label" style={{ marginBottom: "0.25rem" }}>
+                Final Confirmation Status
+              </div>
+              <div className="field-value">
+                <strong>{finalConfirmationUi}</strong>
+              </div>
+              {safeScaffoldFinalConfirmation.saved &&
+              !safeScaffoldFinalConfirmation.saved.stale ? (
+                <>
+                  <p className="field-value" style={{ marginTop: "0.35rem" }}>
+                    {SAFE_SCAFFOLD_FINAL_CONFIRMATION_RECORDED}
+                  </p>
+                  <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+                    {SAFE_SCAFFOLD_FINAL_CONFIRMATION_STILL_DISABLED}
+                  </p>
+                </>
+              ) : null}
+              {safeScaffoldFinalConfirmation.saved?.stale ? (
+                <p className="field-value" style={{ marginTop: "0.35rem" }}>
+                  {SAFE_SCAFFOLD_FINAL_CONFIRMATION_STALE_MESSAGE}
+                </p>
+              ) : null}
+            </div>
+
+            {safeScaffoldFinalConfirmation.readinessBlockedReasons.length > 0 &&
+            !safeScaffoldFinalConfirmation.saved ? (
+              <div style={{ marginTop: "0.5rem" }}>
+                <div className="field-label">Not ready</div>
+                <ul className="workflow-list">
+                  {safeScaffoldFinalConfirmation.readinessBlockedReasons.map(
+                    (reason) => (
+                      <li key={reason}>{reason}</li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            ) : null}
 
             <div
               className="onedrive-warning"
@@ -686,11 +855,8 @@ export function BuildModeTab({
               style={{ marginTop: "0.75rem" }}
             >
               <div className="field-label" style={{ marginBottom: "0.35rem" }}>
-                Future Write Confirmation
+                Required acknowledgements
               </div>
-              <p className="field-value" style={{ fontSize: "0.85rem" }}>
-                {SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION}
-              </p>
               <label
                 style={{
                   display: "flex",
@@ -701,18 +867,118 @@ export function BuildModeTab({
               >
                 <input
                   type="checkbox"
-                  checked={false}
-                  disabled
-                  readOnly
-                  aria-disabled="true"
+                  checked={ackBoundaries}
+                  disabled={!confirmationPreconditionsMet || confirmationLocked}
+                  onChange={(e) => setAckBoundaries(e.target.checked)}
                 />
-                <span className="field-value muted" style={{ fontSize: "0.85rem" }}>
-                  I understand this future scaffold write would create new files
-                  only in the selected target folder. (Disabled until write
-                  stage)
+                <span className="field-value" style={{ fontSize: "0.85rem" }}>
+                  {SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_BOUNDARIES}
                 </span>
               </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={ackStage127}
+                  disabled={!confirmationPreconditionsMet || confirmationLocked}
+                  onChange={(e) => setAckStage127(e.target.checked)}
+                />
+                <span className="field-value" style={{ fontSize: "0.85rem" }}>
+                  {SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_STAGE127}
+                </span>
+              </label>
+              {requiresCautionAck ? (
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "0.5rem",
+                    marginTop: "0.5rem",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={ackCaution}
+                    disabled={!confirmationPreconditionsMet || confirmationLocked}
+                    onChange={(e) => setAckCaution(e.target.checked)}
+                  />
+                  <span className="field-value" style={{ fontSize: "0.85rem" }}>
+                    {SAFE_SCAFFOLD_FINAL_CONFIRMATION_ACK_CAUTION}
+                  </span>
+                </label>
+              ) : null}
             </div>
+
+            {safeScaffoldFinalConfirmation.saved ? (
+              <>
+                <div className="field-value" style={{ marginTop: "0.5rem" }}>
+                  Confirmed:{" "}
+                  <strong>
+                    {safeScaffoldFinalConfirmation.saved.confirmedAt}
+                  </strong>
+                  {safeScaffoldFinalConfirmation.saved.stale ? (
+                    <span className="muted"> (stale)</span>
+                  ) : null}
+                </div>
+                <div className="field-value">
+                  Ready to create:{" "}
+                  <strong>
+                    {safeScaffoldFinalConfirmation.saved.readyToCreateCount}
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Not ready:{" "}
+                  <strong>
+                    {safeScaffoldFinalConfirmation.saved.notReadyCount}
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Target safety at confirmation:{" "}
+                  <strong>
+                    {
+                      safeScaffoldFinalConfirmation.saved
+                        .sourceTargetSafetyStatus
+                    }
+                  </strong>
+                </div>
+                {safeScaffoldFinalConfirmation.saved.warnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {safeScaffoldFinalConfirmation.saved.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Confirmation summary
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "28rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {safeScaffoldFinalConfirmation.saved.markdown}
+                </pre>
+              </>
+            ) : (
+              <p className="field-value muted" style={{ marginTop: "0.5rem" }}>
+                {SAFE_SCAFFOLD_FINAL_CONFIRMATION_STILL_DISABLED}
+              </p>
+            )}
+            {safeScaffoldFinalConfirmation.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {safeScaffoldFinalConfirmation.statusMessage}
+              </p>
+            ) : null}
           </div>
 
           <div className="section-divider" />
@@ -734,9 +1000,9 @@ export function BuildModeTab({
           <div>
             <div className="field-label">Future Safe Scaffold Requirements</div>
             <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
-              Checklist reflects Blueprint, target-folder, file-tree,
-              file-content, and write-manifest preview readiness. No write
-              actions are available yet.
+              Checklist reflects Blueprint, target-folder, previews,
+              write-manifest, and final confirmation readiness. No write actions
+              are available yet.
             </p>
             <ul
               className="workflow-list"

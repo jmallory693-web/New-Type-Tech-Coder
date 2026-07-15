@@ -386,7 +386,7 @@ export function buildSafeScaffoldWriteManifestPreview(
       : []),
     "",
     "## Next Step",
-    "Review this write manifest. The next Safe Scaffold stage can add final confirmation logic (still no automatic writes).",
+    "Review this write manifest, then record Safe Scaffold Final Confirmation (still no file writes).",
     "",
   ].join("\n");
 

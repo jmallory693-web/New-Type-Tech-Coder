@@ -67,6 +67,7 @@ import type { SafeScaffoldTargetRecord } from "../../shared/buildModeTargetSafet
 import type { SafeScaffoldFileTreePreviewRecord } from "../../shared/buildModeFileTreePreview";
 import type { SafeScaffoldFileContentPreviewRecord } from "../../shared/buildModeFileContentPreview";
 import type { SafeScaffoldWriteManifestPreviewRecord } from "../../shared/buildModeWriteManifestPreview";
+import type { SafeScaffoldFinalConfirmationRecord } from "../../shared/buildModeFinalConfirmation";
 import type { TaskImplementationBuilderSource } from "../../shared/taskImplementationIntakeConstants";
 import type { ArchitectureRefactorImplementationBuilderSource } from "../../shared/architectureRefactorTasks/architectureRefactorTaskImplementationIntakeConstants";
 import type { SafetyGate } from "../safety/SafetyGate";
@@ -269,6 +270,8 @@ function migrateProjectRecords(
         record.safeScaffoldFileContentPreview ?? null,
       safeScaffoldWriteManifestPreview:
         record.safeScaffoldWriteManifestPreview ?? null,
+      safeScaffoldFinalConfirmation:
+        record.safeScaffoldFinalConfirmation ?? null,
       architectureRefactorTaskCards: record.architectureRefactorTaskCards ?? null,
       architectureRefactorTaskBuilderHandoff:
         record.architectureRefactorTaskBuilderHandoff ?? null,
@@ -592,6 +595,7 @@ export class HistoryStore {
     safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewRecord | null;
     safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewRecord | null;
     safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
+    safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -760,6 +764,7 @@ export class HistoryStore {
         safeScaffoldFileTreePreview: input.safeScaffoldFileTreePreview,
         safeScaffoldFileContentPreview: input.safeScaffoldFileContentPreview,
         safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
+        safeScaffoldFinalConfirmation: input.safeScaffoldFinalConfirmation,
         architectureRefactorTaskCards: input.architectureRefactorTaskCards,
         architectureRefactorTaskBuilderHandoff:
           input.architectureRefactorTaskBuilderHandoff,
@@ -971,6 +976,13 @@ export class HistoryStore {
           previous.safeScaffoldWriteManifestPreview;
       }
       if (
+        !record.safeScaffoldFinalConfirmation &&
+        previous?.safeScaffoldFinalConfirmation
+      ) {
+        record.safeScaffoldFinalConfirmation =
+          previous.safeScaffoldFinalConfirmation;
+      }
+      if (
         !record.architectureRefactorTaskCards &&
         previous?.architectureRefactorTaskCards
       ) {
@@ -1159,6 +1171,7 @@ export class HistoryStore {
     safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewRecord | null;
     safeScaffoldFileContentPreview: SafeScaffoldFileContentPreviewRecord | null;
     safeScaffoldWriteManifestPreview: SafeScaffoldWriteManifestPreviewRecord | null;
+    safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -1777,6 +1790,7 @@ export class HistoryStore {
       safeScaffoldFileTreePreview: input.safeScaffoldFileTreePreview,
       safeScaffoldFileContentPreview: input.safeScaffoldFileContentPreview,
       safeScaffoldWriteManifestPreview: input.safeScaffoldWriteManifestPreview,
+      safeScaffoldFinalConfirmation: input.safeScaffoldFinalConfirmation,
       architectureRefactorTaskCards: input.architectureRefactorTaskCards,
       architectureRefactorTaskBuilderHandoff:
         input.architectureRefactorTaskBuilderHandoff,

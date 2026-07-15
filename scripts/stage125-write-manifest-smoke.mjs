@@ -257,10 +257,10 @@ check("UI no Write Files", !/>\s*Write Files\s*</.test(tab));
 check("UI no Install", !/>\s*Install\s*</.test(tab));
 check("UI no Run", !/>\s*Run\s*</.test(tab));
 check(
-  "UI has disabled future confirmation",
-  /Disabled until write[\s\S]*stage/i.test(tab) &&
-    /Future Write Confirmation/i.test(tab) &&
-    /SAFE_SCAFFOLD_WRITE_MANIFEST_FUTURE_CONFIRMATION/.test(tab),
+  "UI has Final Confirmation section",
+  /Safe Scaffold Final Confirmation/i.test(tab) &&
+    /Review Final Confirmation/i.test(tab) &&
+    /SAFE_SCAFFOLD_WRITE_FILES_DISABLED_LABEL/.test(tab),
 );
 
 const guide = fs.readFileSync(GUIDE, "utf8");

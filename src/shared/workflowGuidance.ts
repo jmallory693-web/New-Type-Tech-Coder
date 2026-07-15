@@ -117,6 +117,9 @@ export interface WorkflowGuidanceInput {
   /** Stage 125: Safe Scaffold write-manifest preview. */
   safeScaffoldWriteManifestPreviewExists?: boolean;
   safeScaffoldWriteManifestPreviewStale?: boolean;
+  /** Stage 127: Safe Scaffold final confirmation. */
+  safeScaffoldFinalConfirmationExists?: boolean;
+  safeScaffoldFinalConfirmationStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -267,6 +270,11 @@ function isCompleted(
         input.safeScaffoldWriteManifestPreviewExists &&
           !input.safeScaffoldWriteManifestPreviewStale,
       );
+    case "build-mode-final-confirmation":
+      return Boolean(
+        input.safeScaffoldFinalConfirmationExists &&
+          !input.safeScaffoldFinalConfirmationStale,
+      );
     default:
       return false;
   }
@@ -324,6 +332,9 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
       "build-mode-write-manifest-preview",
     "regenerate-safe-scaffold-write-manifest-preview":
       "build-mode-write-manifest-preview",
+    "record-safe-scaffold-final-confirmation": "build-mode-final-confirmation",
+    "rerecord-safe-scaffold-final-confirmation": "build-mode-final-confirmation",
+    "safe-scaffold-final-confirmation-recorded": "build-mode-final-confirmation",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -494,6 +505,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Write-manifest preview ready (preview only — no writes).";
       }
       return "Generate Safe Scaffold Write Manifest Preview (future write plan).";
+    case "build-mode-final-confirmation":
+      if (input.safeScaffoldFinalConfirmationStale) {
+        return "Final confirmation is stale — regenerate previews and confirm again.";
+      }
+      if (input.safeScaffoldFinalConfirmationExists) {
+        return "Final confirmation recorded (readiness only — no writes).";
+      }
+      return "Record Safe Scaffold Final Confirmation (readiness only).";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -674,6 +693,11 @@ export function buildWorkflowProgress(
       id: "build-mode-write-manifest-preview",
       label: "Safe Scaffold Write Manifest Preview",
       focusId: "build-mode-write-manifest-preview",
+    },
+    {
+      id: "build-mode-final-confirmation",
+      label: "Safe Scaffold Final Confirmation",
+      focusId: "build-mode-final-confirmation",
     },
   ];
 

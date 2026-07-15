@@ -96,6 +96,9 @@ export type DailyNextActionKind =
   | "generate-safe-scaffold-write-manifest-preview"
   | "review-safe-scaffold-write-manifest-preview"
   | "regenerate-safe-scaffold-write-manifest-preview"
+  | "record-safe-scaffold-final-confirmation"
+  | "rerecord-safe-scaffold-final-confirmation"
+  | "safe-scaffold-final-confirmation-recorded"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -202,6 +205,9 @@ export interface DailyNextActionInput {
   /** Stage 125: Safe Scaffold write-manifest preview (low priority). */
   safeScaffoldWriteManifestPreviewExists?: boolean;
   safeScaffoldWriteManifestPreviewStale?: boolean;
+  /** Stage 127: Safe Scaffold final confirmation (low priority). */
+  safeScaffoldFinalConfirmationExists?: boolean;
+  safeScaffoldFinalConfirmationStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -365,9 +371,15 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
   "generate-safe-scaffold-write-manifest-preview":
     "Opens Build Mode to generate Safe Scaffold Write Manifest Preview (preview only).",
   "review-safe-scaffold-write-manifest-preview":
-    "Opens Build Mode so you can review the write manifest. Final confirmation comes later.",
+    "Opens Build Mode so you can review the write manifest, then record final confirmation.",
   "regenerate-safe-scaffold-write-manifest-preview":
     "Opens Build Mode to regenerate a stale Safe Scaffold Write Manifest Preview.",
+  "record-safe-scaffold-final-confirmation":
+    "Opens Build Mode to review and record Safe Scaffold final confirmation (readiness only).",
+  "rerecord-safe-scaffold-final-confirmation":
+    "Opens Build Mode to regenerate previews and record Safe Scaffold final confirmation again.",
+  "safe-scaffold-final-confirmation-recorded":
+    "Opens Build Mode to review recorded final confirmation. The next stage can add the first guarded write.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1840,13 +1852,47 @@ export function calculateDailyNextAction(
           freshness,
         );
       }
+      const confirmationExists = Boolean(
+        input.safeScaffoldFinalConfirmationExists,
+      );
+      const confirmationStale = Boolean(
+        input.safeScaffoldFinalConfirmationStale,
+      );
+      if (confirmationStale) {
+        return make(
+          "rerecord-safe-scaffold-final-confirmation",
+          "Regenerate previews and record Safe Scaffold final confirmation again",
+          "Regenerate previews and record Safe Scaffold final confirmation again.",
+          button(
+            "Open Build Tab",
+            "rerecord-safe-scaffold-final-confirmation",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
+      if (!confirmationExists) {
+        return make(
+          "record-safe-scaffold-final-confirmation",
+          "Review and record Safe Scaffold final confirmation",
+          "Review and record Safe Scaffold final confirmation.",
+          button(
+            "Open Build Tab",
+            "record-safe-scaffold-final-confirmation",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
       return make(
-        "review-safe-scaffold-write-manifest-preview",
-        "Review the Safe Scaffold write manifest",
-        "Review the Safe Scaffold write manifest. The next stage can add final confirmation logic.",
+        "safe-scaffold-final-confirmation-recorded",
+        "Safe Scaffold final confirmation is recorded",
+        "Safe Scaffold final confirmation is recorded. The next stage can add the first guarded write.",
         button(
           "Open Build Tab",
-          "review-safe-scaffold-write-manifest-preview",
+          "safe-scaffold-final-confirmation-recorded",
           "navigate",
         ),
         button("Open Blueprint Tab", "open-blueprint", "navigate"),

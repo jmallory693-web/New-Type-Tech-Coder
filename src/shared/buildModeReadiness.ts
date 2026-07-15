@@ -1,5 +1,5 @@
 /**
- * Stage 117/119/121/123/125: Build Mode readiness helpers.
+ * Stage 117/119/121/123/125/127: Build Mode readiness helpers.
  * No IPC. No file writes.
  */
 
@@ -23,6 +23,10 @@ import {
   isSafeScaffoldWriteManifestPreviewCurrent,
   type SafeScaffoldWriteManifestPreviewState,
 } from "./buildModeWriteManifestPreview";
+import {
+  isSafeScaffoldFinalConfirmationCurrent,
+  type SafeScaffoldFinalConfirmationState,
+} from "./buildModeFinalConfirmation";
 
 export type BuildModeBlueprintPresence = "ready" | "missing" | "incomplete";
 
@@ -42,7 +46,9 @@ export type BuildModeNextStepKind =
   | "regenerate-file-contents-preview"
   | "generate-write-manifest-preview"
   | "regenerate-write-manifest-preview"
-  | "later-write-confirmation";
+  | "record-final-confirmation"
+  | "rerecord-final-confirmation"
+  | "later-guarded-write";
 
 export type BuildModeReadiness = {
   blueprintPresence: BuildModeBlueprintPresence;
@@ -62,6 +68,7 @@ export function deriveBuildModeReadiness(
   fileTree?: SafeScaffoldFileTreePreviewState | null,
   fileContent?: SafeScaffoldFileContentPreviewState | null,
   writeManifest?: SafeScaffoldWriteManifestPreviewState | null,
+  finalConfirmation?: SafeScaffoldFinalConfirmationState | null,
 ): BuildModeReadiness {
   const status = blueprint?.status;
   const imported = Boolean(status?.blueprintImported);
@@ -85,6 +92,9 @@ export function deriveBuildModeReadiness(
   const writeManifestCurrent =
     isSafeScaffoldWriteManifestPreviewCurrent(writeManifest);
   const writeManifestStale = Boolean(writeManifest?.saved?.stale);
+  const finalConfirmationCurrent =
+    isSafeScaffoldFinalConfirmationCurrent(finalConfirmation);
+  const finalConfirmationStale = Boolean(finalConfirmation?.saved?.stale);
 
   let blueprintPresence: BuildModeBlueprintPresence = "missing";
   if (imported) {
@@ -152,9 +162,23 @@ export function deriveBuildModeReadiness(
             nextStepText =
               "Next Step: Regenerate Safe Scaffold Write Manifest Preview (preview is stale).";
           } else if (writeManifestCurrent) {
-            nextStepKind = "later-write-confirmation";
-            nextStepText =
-              "Next Step: Review the Safe Scaffold write manifest. Next stage can add final confirmation logic.";
+            if (!finalConfirmation?.saved) {
+              nextStepKind = "record-final-confirmation";
+              nextStepText =
+                "Next Step: Review and record Safe Scaffold final confirmation (readiness only — no files created).";
+            } else if (finalConfirmationStale) {
+              nextStepKind = "rerecord-final-confirmation";
+              nextStepText =
+                "Next Step: Regenerate previews and record Safe Scaffold final confirmation again (confirmation is stale).";
+            } else if (finalConfirmationCurrent) {
+              nextStepKind = "later-guarded-write";
+              nextStepText =
+                "Next Step: Safe Scaffold final confirmation is recorded. A later stage may add the first guarded write.";
+            } else {
+              nextStepKind = "record-final-confirmation";
+              nextStepText =
+                "Next Step: Review and record Safe Scaffold final confirmation (readiness only — no files created).";
+            }
           } else {
             nextStepKind = "generate-write-manifest-preview";
             nextStepText =
@@ -196,7 +220,7 @@ export function deriveBuildModeReadiness(
       "file-tree-preview": fileTreeCurrent,
       "file-contents-preview": fileContentCurrent,
       "written-files-manifest": writeManifestCurrent,
-      "user-confirmed-write": false,
+      "user-confirmed-write": finalConfirmationCurrent,
       "actual-files-written": false,
       "written-files-manifest-after-write": false,
     },

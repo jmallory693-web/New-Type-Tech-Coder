@@ -268,6 +268,12 @@ const IPC_CHANNELS = {
     "nttc:clear-safe-scaffold-write-manifest-preview",
   recordCopySafeScaffoldWriteManifestPreview:
     "nttc:record-copy-safe-scaffold-write-manifest-preview",
+  recordSafeScaffoldFinalConfirmation:
+    "nttc:record-safe-scaffold-final-confirmation",
+  clearSafeScaffoldFinalConfirmation:
+    "nttc:clear-safe-scaffold-final-confirmation",
+  recordCopySafeScaffoldFinalConfirmation:
+    "nttc:record-copy-safe-scaffold-final-confirmation",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -1032,6 +1038,22 @@ const api: NttcApi = {
 
   recordCopySafeScaffoldWriteManifestPreview: (): Promise<AppSnapshot> =>
     ipcRenderer.invoke(IPC_CHANNELS.recordCopySafeScaffoldWriteManifestPreview),
+
+  recordSafeScaffoldFinalConfirmation: (acknowledgements: {
+    futureWriteBoundaries: boolean;
+    stage127NoWrite: boolean;
+    cautionTarget: boolean;
+  }): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.recordSafeScaffoldFinalConfirmation,
+      acknowledgements,
+    ),
+
+  clearSafeScaffoldFinalConfirmation: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearSafeScaffoldFinalConfirmation),
+
+  recordCopySafeScaffoldFinalConfirmation: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.recordCopySafeScaffoldFinalConfirmation),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,

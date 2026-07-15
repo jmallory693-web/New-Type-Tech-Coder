@@ -75,7 +75,7 @@ export const FUTURE_SAFE_SCAFFOLD_REQUIREMENTS = [
   },
   {
     id: "user-confirmed-write",
-    label: "User confirmed write",
+    label: "Future write confirmation recorded",
   },
   {
     id: "actual-files-written",
