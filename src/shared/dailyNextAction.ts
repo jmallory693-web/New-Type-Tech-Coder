@@ -90,6 +90,9 @@ export type DailyNextActionKind =
   | "generate-safe-scaffold-file-tree-preview"
   | "review-safe-scaffold-file-tree-preview"
   | "regenerate-safe-scaffold-file-tree-preview"
+  | "generate-safe-scaffold-file-content-preview"
+  | "review-safe-scaffold-file-content-preview"
+  | "regenerate-safe-scaffold-file-content-preview"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -190,6 +193,9 @@ export interface DailyNextActionInput {
   /** Stage 121: Safe Scaffold file-tree preview (low priority). */
   safeScaffoldFileTreePreviewExists?: boolean;
   safeScaffoldFileTreePreviewStale?: boolean;
+  /** Stage 123: Safe Scaffold file-content preview (low priority). */
+  safeScaffoldFileContentPreviewExists?: boolean;
+  safeScaffoldFileContentPreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -341,9 +347,15 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
   "generate-safe-scaffold-file-tree-preview":
     "Opens Build Mode to generate a Safe Scaffold File Tree Preview (paths only).",
   "review-safe-scaffold-file-tree-preview":
-    "Opens Build Mode so you can review the file-tree preview. Contents preview comes later.",
+    "Opens Build Mode so you can review the file-tree preview before generating contents.",
   "regenerate-safe-scaffold-file-tree-preview":
     "Opens Build Mode to regenerate a stale Safe Scaffold File Tree Preview.",
+  "generate-safe-scaffold-file-content-preview":
+    "Opens Build Mode to generate Safe Scaffold File Content Preview (templates in memory only).",
+  "review-safe-scaffold-file-content-preview":
+    "Opens Build Mode so you can review Safe Scaffold file contents. Write confirmation comes later.",
+  "regenerate-safe-scaffold-file-content-preview":
+    "Opens Build Mode to regenerate a stale Safe Scaffold File Content Preview.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1722,6 +1734,8 @@ export function calculateDailyNextAction(
     if (targetStatus === "caution" || targetStatus === "safe") {
       const previewExists = Boolean(input.safeScaffoldFileTreePreviewExists);
       const previewStale = Boolean(input.safeScaffoldFileTreePreviewStale);
+      const contentExists = Boolean(input.safeScaffoldFileContentPreviewExists);
+      const contentStale = Boolean(input.safeScaffoldFileContentPreviewStale);
       if (previewStale) {
         return make(
           "regenerate-safe-scaffold-file-tree-preview",
@@ -1752,13 +1766,41 @@ export function calculateDailyNextAction(
           freshness,
         );
       }
+      if (contentStale) {
+        return make(
+          "regenerate-safe-scaffold-file-content-preview",
+          "Regenerate Safe Scaffold File Content Preview",
+          "Safe Scaffold File Content Preview is stale. Regenerate after Blueprint, target-folder, or file-tree changes.",
+          button(
+            "Open Build Tab",
+            "regenerate-safe-scaffold-file-content-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
+      if (!contentExists) {
+        return make(
+          "generate-safe-scaffold-file-content-preview",
+          "Generate Safe Scaffold File Content Preview",
+          "Generate Safe Scaffold File Content Preview.",
+          button(
+            "Open Build Tab",
+            "generate-safe-scaffold-file-content-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
       return make(
-        "review-safe-scaffold-file-tree-preview",
-        "Review the Safe Scaffold file tree",
-        "Review the Safe Scaffold file tree. Next stage will add file-content preview.",
+        "review-safe-scaffold-file-content-preview",
+        "Review the Safe Scaffold file contents",
+        "Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest.",
         button(
           "Open Build Tab",
-          "review-safe-scaffold-file-tree-preview",
+          "review-safe-scaffold-file-content-preview",
           "navigate",
         ),
         button("Open Blueprint Tab", "open-blueprint", "navigate"),

@@ -1,5 +1,5 @@
 /**
- * Stage 117/119/121: Build Mode readiness helpers.
+ * Stage 117/119/121/123: Build Mode readiness helpers.
  * No IPC. No file writes.
  */
 
@@ -15,6 +15,10 @@ import {
   isSafeScaffoldFileTreePreviewCurrent,
   type SafeScaffoldFileTreePreviewState,
 } from "./buildModeFileTreePreview";
+import {
+  isSafeScaffoldFileContentPreviewCurrent,
+  type SafeScaffoldFileContentPreviewState,
+} from "./buildModeFileContentPreview";
 
 export type BuildModeBlueprintPresence = "ready" | "missing" | "incomplete";
 
@@ -30,7 +34,9 @@ export type BuildModeNextStepKind =
   | "fix-target-folder"
   | "generate-file-tree-preview"
   | "regenerate-file-tree-preview"
-  | "later-file-contents-preview";
+  | "generate-file-contents-preview"
+  | "regenerate-file-contents-preview"
+  | "later-write-confirmation";
 
 export type BuildModeReadiness = {
   blueprintPresence: BuildModeBlueprintPresence;
@@ -48,6 +54,7 @@ export function deriveBuildModeReadiness(
   blueprint: BlueprintState | null | undefined,
   target?: SafeScaffoldTargetState | null,
   fileTree?: SafeScaffoldFileTreePreviewState | null,
+  fileContent?: SafeScaffoldFileContentPreviewState | null,
 ): BuildModeReadiness {
   const status = blueprint?.status;
   const imported = Boolean(status?.blueprintImported);
@@ -66,6 +73,8 @@ export function deriveBuildModeReadiness(
     target?.lastCheck?.status === "blocked";
   const fileTreeCurrent = isSafeScaffoldFileTreePreviewCurrent(fileTree);
   const fileTreeStale = Boolean(fileTree?.saved?.stale);
+  const fileContentCurrent = isSafeScaffoldFileContentPreviewCurrent(fileContent);
+  const fileContentStale = Boolean(fileContent?.saved?.stale);
 
   let blueprintPresence: BuildModeBlueprintPresence = "missing";
   if (imported) {
@@ -115,9 +124,23 @@ export function deriveBuildModeReadiness(
         nextStepText =
           "Next Step: Regenerate Safe Scaffold File Tree Preview (preview is stale).";
       } else if (fileTreeCurrent) {
-        nextStepKind = "later-file-contents-preview";
-        nextStepText =
-          "Next Step: Review the Safe Scaffold file tree. Next stage will add file-content preview.";
+        if (!fileContent?.saved) {
+          nextStepKind = "generate-file-contents-preview";
+          nextStepText =
+            "Next Step: Generate Safe Scaffold File Content Preview (deterministic templates in memory — no files created).";
+        } else if (fileContentStale) {
+          nextStepKind = "regenerate-file-contents-preview";
+          nextStepText =
+            "Next Step: Regenerate Safe Scaffold File Content Preview (preview is stale).";
+        } else if (fileContentCurrent) {
+          nextStepKind = "later-write-confirmation";
+          nextStepText =
+            "Next Step: Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest.";
+        } else {
+          nextStepKind = "generate-file-contents-preview";
+          nextStepText =
+            "Next Step: Generate Safe Scaffold File Content Preview (deterministic templates in memory — no files created).";
+        }
       } else {
         nextStepKind = "generate-file-tree-preview";
         nextStepText =
@@ -147,7 +170,7 @@ export function deriveBuildModeReadiness(
       "target-folder-selected": targetSelected,
       "target-folder-empty": targetConfirmedSafe,
       "file-tree-preview": fileTreeCurrent,
-      "file-contents-preview": false,
+      "file-contents-preview": fileContentCurrent,
       "user-confirmed-write": false,
       "written-files-manifest": false,
     },

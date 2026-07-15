@@ -77,6 +77,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Build Mode starts with Safe Scaffold Mode. It will only create files in a confirmed empty folder after previews and confirmation. Current Build tab is planning-only and does not write files.",
       "Target folder safety checks are metadata-only. NTTC checks whether a future scaffold target appears empty/safe, but this stage still does not create files.",
       "Safe Scaffold File Tree Preview shows proposed relative file paths only. It does not generate contents or create files.",
+      "Safe Scaffold File Content Preview shows deterministic starter contents in memory only. It does not create files or run package scripts.",
     ],
   },
   {

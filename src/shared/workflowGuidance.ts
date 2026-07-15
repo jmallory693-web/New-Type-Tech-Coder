@@ -111,6 +111,9 @@ export interface WorkflowGuidanceInput {
   /** Stage 121: Safe Scaffold file-tree preview. */
   safeScaffoldFileTreePreviewExists?: boolean;
   safeScaffoldFileTreePreviewStale?: boolean;
+  /** Stage 123: Safe Scaffold file-content preview. */
+  safeScaffoldFileContentPreviewExists?: boolean;
+  safeScaffoldFileContentPreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -251,6 +254,11 @@ function isCompleted(
         input.safeScaffoldFileTreePreviewExists &&
           !input.safeScaffoldFileTreePreviewStale,
       );
+    case "build-mode-file-content-preview":
+      return Boolean(
+        input.safeScaffoldFileContentPreviewExists &&
+          !input.safeScaffoldFileContentPreviewStale,
+      );
     default:
       return false;
   }
@@ -296,6 +304,12 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "generate-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
     "review-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
     "regenerate-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
+    "generate-safe-scaffold-file-content-preview":
+      "build-mode-file-content-preview",
+    "review-safe-scaffold-file-content-preview":
+      "build-mode-file-content-preview",
+    "regenerate-safe-scaffold-file-content-preview":
+      "build-mode-file-content-preview",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -450,6 +464,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "File-tree preview ready (paths only — no contents, no writes).";
       }
       return "Generate Safe Scaffold File Tree Preview (paths only).";
+    case "build-mode-file-content-preview":
+      if (input.safeScaffoldFileContentPreviewStale) {
+        return "File-content preview is stale — regenerate.";
+      }
+      if (input.safeScaffoldFileContentPreviewExists) {
+        return "File-content preview ready (templates in memory — no writes).";
+      }
+      return "Generate Safe Scaffold File Content Preview (deterministic templates).";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -620,6 +642,11 @@ export function buildWorkflowProgress(
       id: "build-mode-file-tree-preview",
       label: "Safe Scaffold File Tree Preview",
       focusId: "build-mode-file-tree-preview",
+    },
+    {
+      id: "build-mode-file-content-preview",
+      label: "Safe Scaffold File Content Preview",
+      focusId: "build-mode-file-content-preview",
     },
   ];
 

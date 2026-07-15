@@ -573,6 +573,15 @@ const emptySafeScaffoldFileTreePreview = {
   readinessBlockedReasons: [] as string[],
 };
 
+const emptySafeScaffoldFileContentPreview = {
+  saved: null,
+  busy: false,
+  statusMessage:
+    "Generate a Safe Scaffold File Content Preview after a current File Tree Preview exists (deterministic templates in memory only — no files are created).",
+  uiStatus: "not-ready" as const,
+  readinessBlockedReasons: [] as string[],
+};
+
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
   statusMessage:
@@ -707,6 +716,7 @@ const emptySnapshot: AppSnapshot = {
   architectureHealth: emptyArchitectureHealth,
   safeScaffoldTarget: emptySafeScaffoldTarget,
   safeScaffoldFileTreePreview: emptySafeScaffoldFileTreePreview,
+  safeScaffoldFileContentPreview: emptySafeScaffoldFileContentPreview,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4707,6 +4717,9 @@ export function App() {
     snapshot.safeScaffoldTarget ?? emptySafeScaffoldTarget;
   const safeScaffoldFileTreePreview =
     snapshot.safeScaffoldFileTreePreview ?? emptySafeScaffoldFileTreePreview;
+  const safeScaffoldFileContentPreview =
+    snapshot.safeScaffoldFileContentPreview ??
+    emptySafeScaffoldFileContentPreview;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5038,6 +5051,13 @@ export function App() {
     safeScaffoldFileTreePreviewStale: Boolean(
       safeScaffoldFileTreePreview.saved?.stale,
     ),
+    safeScaffoldFileContentPreviewExists: Boolean(
+      safeScaffoldFileContentPreview.saved &&
+        !safeScaffoldFileContentPreview.saved.stale,
+    ),
+    safeScaffoldFileContentPreviewStale: Boolean(
+      safeScaffoldFileContentPreview.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5108,6 +5128,13 @@ export function App() {
     ),
     safeScaffoldFileTreePreviewStale: Boolean(
       safeScaffoldFileTreePreview.saved?.stale,
+    ),
+    safeScaffoldFileContentPreviewExists: Boolean(
+      safeScaffoldFileContentPreview.saved &&
+        !safeScaffoldFileContentPreview.saved.stale,
+    ),
+    safeScaffoldFileContentPreviewStale: Boolean(
+      safeScaffoldFileContentPreview.saved?.stale,
     ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
@@ -8204,7 +8231,10 @@ export function App() {
       case "safe-scaffold-target-ready":
       case "generate-safe-scaffold-file-tree-preview":
       case "review-safe-scaffold-file-tree-preview":
-      case "regenerate-safe-scaffold-file-tree-preview": {
+      case "regenerate-safe-scaffold-file-tree-preview":
+      case "generate-safe-scaffold-file-content-preview":
+      case "review-safe-scaffold-file-content-preview":
+      case "regenerate-safe-scaffold-file-content-preview": {
         if (kind === "create-blueprint-before-scaffold") {
           await navigateOnly(
             "blueprint",
@@ -8216,23 +8246,33 @@ export function App() {
         const focusId =
           kind === "open-build-mode" || kind === "build-mode-planning-only"
             ? "build-mode-safety-charter"
-            : kind === "generate-safe-scaffold-file-tree-preview" ||
-                kind === "review-safe-scaffold-file-tree-preview" ||
-                kind === "regenerate-safe-scaffold-file-tree-preview" ||
-                kind === "safe-scaffold-target-ready"
-              ? "build-mode-file-tree-preview"
-              : "build-mode-target-folder";
+            : kind === "generate-safe-scaffold-file-content-preview" ||
+                kind === "review-safe-scaffold-file-content-preview" ||
+                kind === "regenerate-safe-scaffold-file-content-preview"
+              ? "build-mode-file-content-preview"
+              : kind === "generate-safe-scaffold-file-tree-preview" ||
+                  kind === "review-safe-scaffold-file-tree-preview" ||
+                  kind === "regenerate-safe-scaffold-file-tree-preview" ||
+                  kind === "safe-scaffold-target-ready"
+                ? "build-mode-file-tree-preview"
+                : "build-mode-target-folder";
         await navigateOnly(
           "build",
           focusId,
-          kind === "review-safe-scaffold-file-tree-preview"
-            ? "Review the Safe Scaffold file tree. Next stage will add file-content preview."
-            : kind === "regenerate-safe-scaffold-file-tree-preview"
-              ? "Regenerate Safe Scaffold File Tree Preview."
-              : kind === "generate-safe-scaffold-file-tree-preview" ||
-                  kind === "safe-scaffold-target-ready"
-                ? "Generate Safe Scaffold File Tree Preview."
-                : "Select or review the Safe Scaffold target folder (readiness only).",
+          kind === "review-safe-scaffold-file-content-preview"
+            ? "Review the Safe Scaffold file contents. Next stage will prepare write confirmation and manifest."
+            : kind === "regenerate-safe-scaffold-file-content-preview"
+              ? "Regenerate Safe Scaffold File Content Preview."
+              : kind === "generate-safe-scaffold-file-content-preview"
+                ? "Generate Safe Scaffold File Content Preview."
+                : kind === "review-safe-scaffold-file-tree-preview"
+                  ? "Review the Safe Scaffold file tree, then generate file-content preview."
+                  : kind === "regenerate-safe-scaffold-file-tree-preview"
+                    ? "Regenerate Safe Scaffold File Tree Preview."
+                    : kind === "generate-safe-scaffold-file-tree-preview" ||
+                        kind === "safe-scaffold-target-ready"
+                      ? "Generate Safe Scaffold File Tree Preview."
+                      : "Select or review the Safe Scaffold target folder (readiness only).",
         );
         return;
       }
@@ -8811,6 +8851,7 @@ export function App() {
             blueprint={blueprint}
             safeScaffoldTarget={safeScaffoldTarget}
             safeScaffoldFileTreePreview={safeScaffoldFileTreePreview}
+            safeScaffoldFileContentPreview={safeScaffoldFileContentPreview}
             onOpenBlueprint={() => selectTab("blueprint")}
             onSelectTargetFolder={async () => {
               const next = await window.nttc.selectSafeScaffoldTargetFolder();
@@ -8845,6 +8886,32 @@ export function App() {
                 await window.nttc.logUiAction(
                   "warning",
                   "Copy Safe Scaffold file-tree preview failed",
+                  "Clipboard write failed.",
+                );
+              }
+            }}
+            onGenerateFileContentPreview={async () => {
+              const next =
+                await window.nttc.generateSafeScaffoldFileContentPreview();
+              setSnapshot(next);
+            }}
+            onClearFileContentPreview={async () => {
+              const next =
+                await window.nttc.clearSafeScaffoldFileContentPreview();
+              setSnapshot(next);
+            }}
+            onCopyFileContentPreview={async () => {
+              const md = safeScaffoldFileContentPreview.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopySafeScaffoldFileContentPreview();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Safe Scaffold file-content preview failed",
                   "Clipboard write failed.",
                 );
               }
