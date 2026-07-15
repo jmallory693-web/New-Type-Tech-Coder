@@ -1,5 +1,6 @@
 import type { BlueprintState } from "../../shared/types";
 import type { SafeScaffoldTargetState } from "../../shared/buildModeTargetSafety";
+import type { SafeScaffoldFileTreePreviewState } from "../../shared/buildModeFileTreePreview";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -15,24 +16,41 @@ import {
   SAFE_SCAFFOLD_FUTURE_WRITE_READINESS,
   SAFE_SCAFFOLD_TARGET_UI_LABELS,
 } from "../../shared/buildModeTargetSafety";
+import {
+  SAFE_SCAFFOLD_FILE_TREE_NO_CONTENTS_YET,
+  SAFE_SCAFFOLD_FILE_TREE_PREVIEW_ONLY,
+  SAFE_SCAFFOLD_FILE_TREE_UI_LABELS,
+} from "../../shared/buildModeFileTreePreview";
 
-/** Stage 117/119: Build Mode shell — target readiness only; no file writes. */
+/** Stage 117–121: Build Mode — target readiness + file-tree preview only. */
 export function BuildModeTab({
   blueprint,
   safeScaffoldTarget,
+  safeScaffoldFileTreePreview,
   onOpenBlueprint,
   onSelectTargetFolder,
   onClearTargetFolder,
   onRefreshTargetSafety,
+  onGenerateFileTreePreview,
+  onClearFileTreePreview,
+  onCopyFileTreePreview,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
+  safeScaffoldFileTreePreview: SafeScaffoldFileTreePreviewState;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
   onClearTargetFolder: () => void | Promise<void>;
   onRefreshTargetSafety: () => void | Promise<void>;
+  onGenerateFileTreePreview: () => void | Promise<void>;
+  onClearFileTreePreview: () => void | Promise<void>;
+  onCopyFileTreePreview: () => void | Promise<void>;
 }) {
-  const readiness = deriveBuildModeReadiness(blueprint, safeScaffoldTarget);
+  const readiness = deriveBuildModeReadiness(
+    blueprint,
+    safeScaffoldTarget,
+    safeScaffoldFileTreePreview,
+  );
   const uiLabel = SAFE_SCAFFOLD_TARGET_UI_LABELS[safeScaffoldTarget.uiStatus];
   const safetyLabel = folderSafetyLabel(safeScaffoldTarget);
   const summary = safeScaffoldTarget.lastCheck?.entrySummary;
@@ -49,11 +67,16 @@ export function BuildModeTab({
     : "none";
 
   const laterOnlyIds = new Set([
-    "file-tree-preview",
     "file-contents-preview",
     "user-confirmed-write",
     "written-files-manifest",
   ]);
+
+  const fileTreeUi =
+    SAFE_SCAFFOLD_FILE_TREE_UI_LABELS[safeScaffoldFileTreePreview.uiStatus];
+  const canClickGenerate =
+    !safeScaffoldFileTreePreview.busy &&
+    safeScaffoldFileTreePreview.readinessBlockedReasons.length === 0;
 
   return (
     <div className="tab-panel" role="tabpanel" aria-label="Build">
@@ -61,8 +84,8 @@ export function BuildModeTab({
         <div className="panel-header">
           <h2 className="panel-title">Safe Scaffold Mode</h2>
           <p className="panel-subtitle">
-            Target folder readiness only — planning/readiness. NTTC does not
-            write files in this stage.
+            Target folder readiness and file-tree preview only. NTTC does not
+            write files or generate file contents in this stage.
           </p>
         </div>
         <div className="panel-body stack">
@@ -94,7 +117,14 @@ export function BuildModeTab({
               Select a future scaffold target folder. Assessment uses shallow
               folder metadata only. No files are created.
             </p>
-            <div style={{ marginTop: "0.5rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
               <button
                 type="button"
                 className="action-btn primary"
@@ -182,6 +212,142 @@ export function BuildModeTab({
 
           <div className="section-divider" />
 
+          <div data-focus-id="build-mode-file-tree-preview">
+            <div className="field-label">Safe Scaffold File Tree Preview</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              Deterministic proposed relative paths only. No file contents. No
+              files are created.
+            </p>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => void onGenerateFileTreePreview()}
+                disabled={!canClickGenerate}
+              >
+                Generate File Tree Preview
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyFileTreePreview()}
+                disabled={
+                  safeScaffoldFileTreePreview.busy ||
+                  !safeScaffoldFileTreePreview.saved?.markdown
+                }
+              >
+                Copy File Tree Preview
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearFileTreePreview()}
+                disabled={
+                  safeScaffoldFileTreePreview.busy ||
+                  !safeScaffoldFileTreePreview.saved
+                }
+              >
+                Clear File Tree Preview
+              </button>
+            </div>
+
+            <div
+              className="onedrive-warning"
+              role="status"
+              style={{ marginTop: "0.75rem" }}
+            >
+              <div className="field-label" style={{ marginBottom: "0.25rem" }}>
+                File Tree Preview Status
+              </div>
+              <div className="field-value">
+                <strong>{fileTreeUi}</strong>
+              </div>
+            </div>
+
+            {safeScaffoldFileTreePreview.readinessBlockedReasons.length > 0 &&
+            !safeScaffoldFileTreePreview.saved ? (
+              <div style={{ marginTop: "0.5rem" }}>
+                <div className="field-label">Not ready</div>
+                <ul className="workflow-list">
+                  {safeScaffoldFileTreePreview.readinessBlockedReasons.map(
+                    (reason) => (
+                      <li key={reason}>{reason}</li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            ) : null}
+
+            {safeScaffoldFileTreePreview.saved ? (
+              <>
+                <div className="field-value" style={{ marginTop: "0.5rem" }}>
+                  Generated:{" "}
+                  <strong>
+                    {safeScaffoldFileTreePreview.saved.generatedAt}
+                  </strong>
+                  {safeScaffoldFileTreePreview.saved.stale ? (
+                    <span className="muted"> (stale)</span>
+                  ) : null}
+                </div>
+                <div className="field-value">
+                  Paths:{" "}
+                  <strong>
+                    {
+                      safeScaffoldFileTreePreview.saved.proposedRelativePaths
+                        .length
+                    }
+                  </strong>
+                </div>
+                <div className="field-value">
+                  Target safety at generation:{" "}
+                  <strong>
+                    {safeScaffoldFileTreePreview.saved.sourceTargetSafetyStatus}
+                  </strong>
+                </div>
+                {safeScaffoldFileTreePreview.saved.warnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {safeScaffoldFileTreePreview.saved.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Preview markdown
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "22rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {safeScaffoldFileTreePreview.saved.markdown}
+                </pre>
+              </>
+            ) : (
+              <p className="field-value muted" style={{ marginTop: "0.5rem" }}>
+                {SAFE_SCAFFOLD_FILE_TREE_PREVIEW_ONLY}{" "}
+                {SAFE_SCAFFOLD_FILE_TREE_NO_CONTENTS_YET}
+              </p>
+            )}
+            {safeScaffoldFileTreePreview.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {safeScaffoldFileTreePreview.statusMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="section-divider" />
+
           <div>
             <div className="field-label">Safety Charter</div>
             <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
@@ -199,8 +365,8 @@ export function BuildModeTab({
           <div>
             <div className="field-label">Future Safe Scaffold Requirements</div>
             <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
-              Checklist reflects real Blueprint + target-folder readiness. No
-              write actions are available yet.
+              Checklist reflects Blueprint, target-folder, and file-tree preview
+              readiness. No write actions are available yet.
             </p>
             <ul
               className="workflow-list"
@@ -289,7 +455,8 @@ export function BuildModeTab({
               </button>
             ) : (
               <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
-                No Create Files, Scaffold, or Write controls exist yet.
+                No Create Files, Scaffold, Write, or Generate Contents controls
+                exist yet.
               </p>
             )}
           </div>

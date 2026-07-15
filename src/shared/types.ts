@@ -1995,6 +1995,8 @@ export interface ProjectHistoryRecord {
   architectureHealth: ArchitectureHealthRecord | null;
   /** Stage 119: Safe Scaffold target folder readiness metadata only. */
   safeScaffoldTarget: import("./buildModeTargetSafety").SafeScaffoldTargetRecord | null;
+  /** Stage 121: Safe Scaffold file-tree preview metadata only. */
+  safeScaffoldFileTreePreview: import("./buildModeFileTreePreview").SafeScaffoldFileTreePreviewRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2080,6 +2082,8 @@ export interface AppSnapshot {
   architectureHealth: ArchitectureHealthState;
   /** Stage 119: Safe Scaffold target-folder readiness (metadata only; no writes). */
   safeScaffoldTarget: import("./buildModeTargetSafety").SafeScaffoldTargetState;
+  /** Stage 121: Safe Scaffold file-tree preview (paths only; no writes). */
+  safeScaffoldFileTreePreview: import("./buildModeFileTreePreview").SafeScaffoldFileTreePreviewState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2321,6 +2325,11 @@ export const IPC_CHANNELS = {
   selectSafeScaffoldTargetFolder: "nttc:select-safe-scaffold-target-folder",
   clearSafeScaffoldTargetFolder: "nttc:clear-safe-scaffold-target-folder",
   refreshSafeScaffoldTargetSafety: "nttc:refresh-safe-scaffold-target-safety",
+  generateSafeScaffoldFileTreePreview:
+    "nttc:generate-safe-scaffold-file-tree-preview",
+  clearSafeScaffoldFileTreePreview: "nttc:clear-safe-scaffold-file-tree-preview",
+  recordCopySafeScaffoldFileTreePreview:
+    "nttc:record-copy-safe-scaffold-file-tree-preview",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2582,6 +2591,9 @@ export interface NttcApi {
   selectSafeScaffoldTargetFolder: () => Promise<AppSnapshot>;
   clearSafeScaffoldTargetFolder: () => Promise<AppSnapshot>;
   refreshSafeScaffoldTargetSafety: () => Promise<AppSnapshot>;
+  generateSafeScaffoldFileTreePreview: () => Promise<AppSnapshot>;
+  clearSafeScaffoldFileTreePreview: () => Promise<AppSnapshot>;
+  recordCopySafeScaffoldFileTreePreview: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,

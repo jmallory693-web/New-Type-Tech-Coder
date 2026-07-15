@@ -1,15 +1,20 @@
 /**
- * Stage 117/119: Build Mode readiness helpers (read-only Blueprint + target state).
+ * Stage 117/119/121: Build Mode readiness helpers.
  * No IPC. No file writes.
  */
 
 import type { BlueprintState } from "./types";
 import type { FutureSafeScaffoldRequirementId } from "./buildModeSafetyCharter";
 import {
+  isSafeScaffoldTargetAllowingPreview,
   isSafeScaffoldTargetConfirmedSafe,
   isSafeScaffoldTargetSelected,
   type SafeScaffoldTargetState,
 } from "./buildModeTargetSafety";
+import {
+  isSafeScaffoldFileTreePreviewCurrent,
+  type SafeScaffoldFileTreePreviewState,
+} from "./buildModeFileTreePreview";
 
 export type BuildModeBlueprintPresence = "ready" | "missing" | "incomplete";
 
@@ -23,7 +28,9 @@ export type BuildModeNextStepKind =
   | "generate-task-cards"
   | "select-target-folder"
   | "fix-target-folder"
-  | "later-scaffold-preview";
+  | "generate-file-tree-preview"
+  | "regenerate-file-tree-preview"
+  | "later-file-contents-preview";
 
 export type BuildModeReadiness = {
   blueprintPresence: BuildModeBlueprintPresence;
@@ -40,6 +47,7 @@ export type BuildModeReadiness = {
 export function deriveBuildModeReadiness(
   blueprint: BlueprintState | null | undefined,
   target?: SafeScaffoldTargetState | null,
+  fileTree?: SafeScaffoldFileTreePreviewState | null,
 ): BuildModeReadiness {
   const status = blueprint?.status;
   const imported = Boolean(status?.blueprintImported);
@@ -50,16 +58,14 @@ export function deriveBuildModeReadiness(
 
   const targetSelected = isSafeScaffoldTargetSelected(target);
   const targetConfirmedSafe = isSafeScaffoldTargetConfirmedSafe(target);
+  const targetAllowsPreview = isSafeScaffoldTargetAllowingPreview(target);
   const targetBlocked =
     Boolean(target?.selectedPath) &&
     !target?.stale &&
     !target?.busy &&
     target?.lastCheck?.status === "blocked";
-  const targetCaution =
-    Boolean(target?.selectedPath) &&
-    !target?.stale &&
-    !target?.busy &&
-    target?.lastCheck?.status === "caution";
+  const fileTreeCurrent = isSafeScaffoldFileTreePreviewCurrent(fileTree);
+  const fileTreeStale = Boolean(fileTree?.saved?.stale);
 
   let blueprintPresence: BuildModeBlueprintPresence = "missing";
   if (imported) {
@@ -95,15 +101,32 @@ export function deriveBuildModeReadiness(
       nextStepKind = "select-target-folder";
       nextStepText =
         "Next Step: Select a Safe Scaffold target folder and refresh the safety check.";
-    } else if (targetBlocked || targetCaution) {
+    } else if (targetBlocked) {
       nextStepKind = "fix-target-folder";
-      nextStepText = targetBlocked
-        ? "Next Step: Choose an empty folder outside the current project."
-        : "Next Step: Prefer an empty folder (current target is Caution — writes still not allowed).";
-    } else if (targetConfirmedSafe) {
-      nextStepKind = "later-scaffold-preview";
       nextStepText =
-        "Next Step: Target folder is safe. Next stage is scaffold file-tree preview (not enabled yet).";
+        "Next Step: Choose an empty folder outside the current project.";
+    } else if (targetAllowsPreview) {
+      if (!fileTree?.saved) {
+        nextStepKind = "generate-file-tree-preview";
+        nextStepText =
+          "Next Step: Generate Safe Scaffold File Tree Preview (paths only — no files created).";
+      } else if (fileTreeStale) {
+        nextStepKind = "regenerate-file-tree-preview";
+        nextStepText =
+          "Next Step: Regenerate Safe Scaffold File Tree Preview (preview is stale).";
+      } else if (fileTreeCurrent) {
+        nextStepKind = "later-file-contents-preview";
+        nextStepText =
+          "Next Step: Review the Safe Scaffold file tree. Next stage will add file-content preview.";
+      } else {
+        nextStepKind = "generate-file-tree-preview";
+        nextStepText =
+          "Next Step: Generate Safe Scaffold File Tree Preview (paths only — no files created).";
+      }
+    } else if (!targetConfirmedSafe) {
+      nextStepKind = "fix-target-folder";
+      nextStepText =
+        "Next Step: Prefer an empty Safe folder (writes still not allowed).";
     } else {
       nextStepKind = "select-target-folder";
       nextStepText =
@@ -123,7 +146,7 @@ export function deriveBuildModeReadiness(
       "task-cards-exist": taskCardsExist,
       "target-folder-selected": targetSelected,
       "target-folder-empty": targetConfirmedSafe,
-      "file-tree-preview": false,
+      "file-tree-preview": fileTreeCurrent,
       "file-contents-preview": false,
       "user-confirmed-write": false,
       "written-files-manifest": false,

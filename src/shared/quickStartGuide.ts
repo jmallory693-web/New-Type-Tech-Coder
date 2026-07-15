@@ -76,6 +76,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Select one task card and generate a Task Builder Handoff to copy to Cursor, Claude, or a human builder — one task at a time.",
       "Build Mode starts with Safe Scaffold Mode. It will only create files in a confirmed empty folder after previews and confirmation. Current Build tab is planning-only and does not write files.",
       "Target folder safety checks are metadata-only. NTTC checks whether a future scaffold target appears empty/safe, but this stage still does not create files.",
+      "Safe Scaffold File Tree Preview shows proposed relative file paths only. It does not generate contents or create files.",
     ],
   },
   {

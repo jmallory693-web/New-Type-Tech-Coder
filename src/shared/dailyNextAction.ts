@@ -87,6 +87,9 @@ export type DailyNextActionKind =
   | "select-safe-scaffold-target-folder"
   | "choose-empty-scaffold-target-folder"
   | "safe-scaffold-target-ready"
+  | "generate-safe-scaffold-file-tree-preview"
+  | "review-safe-scaffold-file-tree-preview"
+  | "regenerate-safe-scaffold-file-tree-preview"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -184,6 +187,9 @@ export interface DailyNextActionInput {
   safeScaffoldTargetSelected?: boolean;
   safeScaffoldTargetStale?: boolean;
   safeScaffoldTargetStatus?: "safe" | "caution" | "blocked" | null;
+  /** Stage 121: Safe Scaffold file-tree preview (low priority). */
+  safeScaffoldFileTreePreviewExists?: boolean;
+  safeScaffoldFileTreePreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -331,7 +337,13 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
   "choose-empty-scaffold-target-folder":
     "Opens Build Mode so you can choose an empty folder outside the current project.",
   "safe-scaffold-target-ready":
-    "Opens Build Mode. Target folder is safe; scaffold file-tree preview comes in a later stage.",
+    "Opens Build Mode to generate a Safe Scaffold File Tree Preview.",
+  "generate-safe-scaffold-file-tree-preview":
+    "Opens Build Mode to generate a Safe Scaffold File Tree Preview (paths only).",
+  "review-safe-scaffold-file-tree-preview":
+    "Opens Build Mode so you can review the file-tree preview. Contents preview comes later.",
+  "regenerate-safe-scaffold-file-tree-preview":
+    "Opens Build Mode to regenerate a stale Safe Scaffold File Tree Preview.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1693,13 +1705,11 @@ export function calculateDailyNextAction(
         freshness,
       );
     }
-    if (targetStatus === "blocked" || targetStatus === "caution") {
+    if (targetStatus === "blocked") {
       return make(
         "choose-empty-scaffold-target-folder",
         "Choose an empty folder outside the current project",
-        targetStatus === "blocked"
-          ? "The selected Safe Scaffold target folder is blocked. Choose an empty folder outside the current project."
-          : "The selected Safe Scaffold target folder is Caution. Prefer an empty folder outside the current project.",
+        "The selected Safe Scaffold target folder is blocked. Choose an empty folder outside the current project.",
         button(
           "Open Build Tab",
           "choose-empty-scaffold-target-folder",
@@ -1709,12 +1719,48 @@ export function calculateDailyNextAction(
         freshness,
       );
     }
-    if (targetStatus === "safe") {
+    if (targetStatus === "caution" || targetStatus === "safe") {
+      const previewExists = Boolean(input.safeScaffoldFileTreePreviewExists);
+      const previewStale = Boolean(input.safeScaffoldFileTreePreviewStale);
+      if (previewStale) {
+        return make(
+          "regenerate-safe-scaffold-file-tree-preview",
+          "Regenerate Safe Scaffold File Tree Preview",
+          "Safe Scaffold File Tree Preview is stale. Regenerate after Blueprint or target-folder changes.",
+          button(
+            "Open Build Tab",
+            "regenerate-safe-scaffold-file-tree-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
+      if (!previewExists) {
+        return make(
+          "generate-safe-scaffold-file-tree-preview",
+          "Generate Safe Scaffold File Tree Preview",
+          targetStatus === "safe"
+            ? "Target folder is safe. Generate Safe Scaffold File Tree Preview."
+            : "Target folder is Caution. You may generate a File Tree Preview with a caution warning (writes still not allowed).",
+          button(
+            "Open Build Tab",
+            "generate-safe-scaffold-file-tree-preview",
+            "navigate",
+          ),
+          button("Open Blueprint Tab", "open-blueprint", "navigate"),
+          freshness,
+        );
+      }
       return make(
-        "safe-scaffold-target-ready",
-        "Target folder is safe",
-        "Target folder is safe. Next stage is scaffold file-tree preview.",
-        button("Open Build Tab", "safe-scaffold-target-ready", "navigate"),
+        "review-safe-scaffold-file-tree-preview",
+        "Review the Safe Scaffold file tree",
+        "Review the Safe Scaffold file tree. Next stage will add file-content preview.",
+        button(
+          "Open Build Tab",
+          "review-safe-scaffold-file-tree-preview",
+          "navigate",
+        ),
         button("Open Blueprint Tab", "open-blueprint", "navigate"),
         freshness,
       );

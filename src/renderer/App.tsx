@@ -564,6 +564,15 @@ const emptySafeScaffoldTarget = {
   uiStatus: "none" as const,
 };
 
+const emptySafeScaffoldFileTreePreview = {
+  saved: null,
+  busy: false,
+  statusMessage:
+    "Generate a Safe Scaffold File Tree Preview once Blueprint, task cards, and a Safe/Caution target folder are ready (paths only — no files are created).",
+  uiStatus: "not-ready" as const,
+  readinessBlockedReasons: [] as string[],
+};
+
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
   statusMessage:
@@ -697,6 +706,7 @@ const emptySnapshot: AppSnapshot = {
   reportsUi: emptyReportsUi,
   architectureHealth: emptyArchitectureHealth,
   safeScaffoldTarget: emptySafeScaffoldTarget,
+  safeScaffoldFileTreePreview: emptySafeScaffoldFileTreePreview,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4695,6 +4705,8 @@ export function App() {
   const architectureHealth = snapshot.architectureHealth ?? emptyArchitectureHealth;
   const safeScaffoldTarget =
     snapshot.safeScaffoldTarget ?? emptySafeScaffoldTarget;
+  const safeScaffoldFileTreePreview =
+    snapshot.safeScaffoldFileTreePreview ?? emptySafeScaffoldFileTreePreview;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5019,6 +5031,13 @@ export function App() {
     safeScaffoldTargetSelected: Boolean(safeScaffoldTarget.selectedPath),
     safeScaffoldTargetStale: Boolean(safeScaffoldTarget.stale),
     safeScaffoldTargetStatus: safeScaffoldTarget.lastCheck?.status ?? null,
+    safeScaffoldFileTreePreviewExists: Boolean(
+      safeScaffoldFileTreePreview.saved &&
+        !safeScaffoldFileTreePreview.saved.stale,
+    ),
+    safeScaffoldFileTreePreviewStale: Boolean(
+      safeScaffoldFileTreePreview.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5083,6 +5102,13 @@ export function App() {
     safeScaffoldTargetSelected: Boolean(safeScaffoldTarget.selectedPath),
     safeScaffoldTargetStale: Boolean(safeScaffoldTarget.stale),
     safeScaffoldTargetStatus: safeScaffoldTarget.lastCheck?.status ?? null,
+    safeScaffoldFileTreePreviewExists: Boolean(
+      safeScaffoldFileTreePreview.saved &&
+        !safeScaffoldFileTreePreview.saved.stale,
+    ),
+    safeScaffoldFileTreePreviewStale: Boolean(
+      safeScaffoldFileTreePreview.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -8175,7 +8201,10 @@ export function App() {
       case "build-mode-planning-only":
       case "select-safe-scaffold-target-folder":
       case "choose-empty-scaffold-target-folder":
-      case "safe-scaffold-target-ready": {
+      case "safe-scaffold-target-ready":
+      case "generate-safe-scaffold-file-tree-preview":
+      case "review-safe-scaffold-file-tree-preview":
+      case "regenerate-safe-scaffold-file-tree-preview": {
         if (kind === "create-blueprint-before-scaffold") {
           await navigateOnly(
             "blueprint",
@@ -8184,14 +8213,26 @@ export function App() {
           );
           return;
         }
-        await navigateOnly(
-          "build",
+        const focusId =
           kind === "open-build-mode" || kind === "build-mode-planning-only"
             ? "build-mode-safety-charter"
-            : "build-mode-target-folder",
-          kind === "safe-scaffold-target-ready"
-            ? "Target folder is safe. Next stage is scaffold file-tree preview."
-            : "Select or review the Safe Scaffold target folder (readiness only).",
+            : kind === "generate-safe-scaffold-file-tree-preview" ||
+                kind === "review-safe-scaffold-file-tree-preview" ||
+                kind === "regenerate-safe-scaffold-file-tree-preview" ||
+                kind === "safe-scaffold-target-ready"
+              ? "build-mode-file-tree-preview"
+              : "build-mode-target-folder";
+        await navigateOnly(
+          "build",
+          focusId,
+          kind === "review-safe-scaffold-file-tree-preview"
+            ? "Review the Safe Scaffold file tree. Next stage will add file-content preview."
+            : kind === "regenerate-safe-scaffold-file-tree-preview"
+              ? "Regenerate Safe Scaffold File Tree Preview."
+              : kind === "generate-safe-scaffold-file-tree-preview" ||
+                  kind === "safe-scaffold-target-ready"
+                ? "Generate Safe Scaffold File Tree Preview."
+                : "Select or review the Safe Scaffold target folder (readiness only).",
         );
         return;
       }
@@ -8769,6 +8810,7 @@ export function App() {
           <BuildModeTab
             blueprint={blueprint}
             safeScaffoldTarget={safeScaffoldTarget}
+            safeScaffoldFileTreePreview={safeScaffoldFileTreePreview}
             onOpenBlueprint={() => selectTab("blueprint")}
             onSelectTargetFolder={async () => {
               const next = await window.nttc.selectSafeScaffoldTargetFolder();
@@ -8781,6 +8823,31 @@ export function App() {
             onRefreshTargetSafety={async () => {
               const next = await window.nttc.refreshSafeScaffoldTargetSafety();
               setSnapshot(next);
+            }}
+            onGenerateFileTreePreview={async () => {
+              const next =
+                await window.nttc.generateSafeScaffoldFileTreePreview();
+              setSnapshot(next);
+            }}
+            onClearFileTreePreview={async () => {
+              const next = await window.nttc.clearSafeScaffoldFileTreePreview();
+              setSnapshot(next);
+            }}
+            onCopyFileTreePreview={async () => {
+              const md = safeScaffoldFileTreePreview.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopySafeScaffoldFileTreePreview();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Safe Scaffold file-tree preview failed",
+                  "Clipboard write failed.",
+                );
+              }
             }}
           />
         ) : null}

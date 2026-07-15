@@ -108,6 +108,9 @@ export interface WorkflowGuidanceInput {
   safeScaffoldTargetSelected?: boolean;
   safeScaffoldTargetStale?: boolean;
   safeScaffoldTargetStatus?: "safe" | "caution" | "blocked" | null;
+  /** Stage 121: Safe Scaffold file-tree preview. */
+  safeScaffoldFileTreePreviewExists?: boolean;
+  safeScaffoldFileTreePreviewStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -240,7 +243,13 @@ function isCompleted(
       return Boolean(
         input.safeScaffoldTargetSelected &&
           !input.safeScaffoldTargetStale &&
-          input.safeScaffoldTargetStatus === "safe",
+          (input.safeScaffoldTargetStatus === "safe" ||
+            input.safeScaffoldTargetStatus === "caution"),
+      );
+    case "build-mode-file-tree-preview":
+      return Boolean(
+        input.safeScaffoldFileTreePreviewExists &&
+          !input.safeScaffoldFileTreePreviewStale,
       );
     default:
       return false;
@@ -283,7 +292,10 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "build-mode-planning-only": "build-mode-safety-charter",
     "select-safe-scaffold-target-folder": "build-mode-target-folder",
     "choose-empty-scaffold-target-folder": "build-mode-target-folder",
-    "safe-scaffold-target-ready": "build-mode-target-folder",
+    "safe-scaffold-target-ready": "build-mode-file-tree-preview",
+    "generate-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
+    "review-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
+    "regenerate-safe-scaffold-file-tree-preview": "build-mode-file-tree-preview",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -430,6 +442,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Target folder selected — refresh safety check.";
       }
       return `Folder safety: ${input.safeScaffoldTargetStatus} — writes still not allowed.`;
+    case "build-mode-file-tree-preview":
+      if (input.safeScaffoldFileTreePreviewStale) {
+        return "File-tree preview is stale — regenerate.";
+      }
+      if (input.safeScaffoldFileTreePreviewExists) {
+        return "File-tree preview ready (paths only — no contents, no writes).";
+      }
+      return "Generate Safe Scaffold File Tree Preview (paths only).";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -595,6 +615,11 @@ export function buildWorkflowProgress(
       id: "build-mode-target-folder",
       label: "Safe Scaffold Target Folder",
       focusId: "build-mode-target-folder",
+    },
+    {
+      id: "build-mode-file-tree-preview",
+      label: "Safe Scaffold File Tree Preview",
+      focusId: "build-mode-file-tree-preview",
     },
   ];
 

@@ -143,6 +143,21 @@ export function isSafeScaffoldTargetConfirmedSafe(
   return state.lastCheck.status === "safe";
 }
 
+/**
+ * Stage 121: target allows file-tree preview (Safe or Caution, non-stale).
+ * Blocked / stale / unchecked do not allow preview.
+ */
+export function isSafeScaffoldTargetAllowingPreview(
+  state: SafeScaffoldTargetState | null | undefined,
+): boolean {
+  if (!state?.selectedPath || !state.lastCheck || state.stale || state.busy) {
+    return false;
+  }
+  return (
+    state.lastCheck.status === "safe" || state.lastCheck.status === "caution"
+  );
+}
+
 export function normalizeSafeScaffoldTargetRecord(
   raw: SafeScaffoldTargetRecord | null | undefined,
 ): SafeScaffoldTargetRecord | null {

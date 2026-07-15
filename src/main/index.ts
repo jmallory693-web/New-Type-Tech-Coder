@@ -54,6 +54,8 @@ import {
 import { ChangedFilesTaskLinkManager } from "./planning/ChangedFilesTaskLinkManager";
 import { ArchitectureHealthManager } from "./architecture/ArchitectureHealthManager";
 import { SafeScaffoldTargetManager } from "./buildMode/SafeScaffoldTargetManager";
+import { SafeScaffoldFileTreePreviewManager } from "./buildMode/SafeScaffoldFileTreePreviewManager";
+import { DEFAULT_BLUEPRINT_PROJECT_TYPE } from "../shared/blueprintConstants";
 import { ArchitectureRefactorTaskCardsManager } from "./architecture/ArchitectureRefactorTaskCardsManager";
 import { ArchitectureRefactorTaskBuilderHandoffManager } from "./architecture/ArchitectureRefactorTaskBuilderHandoffManager";
 import { ArchitectureRefactorTaskImplementationIntakeManager } from "./architecture/ArchitectureRefactorTaskImplementationIntakeManager";
@@ -178,6 +180,8 @@ const taskArtifactIndexManager = new TaskArtifactIndexManager(safetyGate);
 const changedFilesTaskLinkManager = new ChangedFilesTaskLinkManager(safetyGate);
 const architectureHealthManager = new ArchitectureHealthManager(safetyGate);
 const safeScaffoldTargetManager = new SafeScaffoldTargetManager(safetyGate);
+const safeScaffoldFileTreePreviewManager =
+  new SafeScaffoldFileTreePreviewManager(safetyGate);
 const architectureRefactorTaskCardsManager =
   new ArchitectureRefactorTaskCardsManager(safetyGate);
 const architectureRefactorTaskBuilderHandoffManager =
@@ -459,6 +463,7 @@ function getProjectMemoryInput() {
     builderHandoffExport: builderHandoffExportManager.getSaved(),
     architectureHealth: architectureHealthManager.getSaved(),
     safeScaffoldTarget: safeScaffoldTargetManager.getSaved(),
+    safeScaffoldFileTreePreview: safeScaffoldFileTreePreviewManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -526,6 +531,7 @@ function getBlueprintPersistenceFields() {
       changedFilesTaskLinkManager.getSelectedTaskId(),
     architectureHealth: architectureHealthManager.getSaved(),
     safeScaffoldTarget: safeScaffoldTargetManager.getSaved(),
+    safeScaffoldFileTreePreview: safeScaffoldFileTreePreviewManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -741,6 +747,19 @@ function persistSessionHistory(): void {
   });
 }
 
+function getFileTreePreviewGenerateContext() {
+  const bp = blueprintManager.getState();
+  const cards = blueprintTaskCardsManager.getSaved();
+  return {
+    blueprintImported: Boolean(bp.importedBlueprint),
+    blueprintProjectType:
+      bp.intake?.projectType ?? DEFAULT_BLUEPRINT_PROJECT_TYPE,
+    taskCardCount: cards?.cards?.length ?? 0,
+    taskCardsGeneratedAt: cards?.generatedAt ?? null,
+    target: safeScaffoldTargetManager.getState(),
+  };
+}
+
 function buildSnapshot(): AppSnapshot {
   const project = safetyGate.getProject();
   return {
@@ -787,6 +806,9 @@ function buildSnapshot(): AppSnapshot {
     reportsUi: { panelCollapse: reportsUiManager.getPanelCollapse() },
     architectureHealth: architectureHealthManager.getState(),
     safeScaffoldTarget: safeScaffoldTargetManager.getState(),
+    safeScaffoldFileTreePreview: safeScaffoldFileTreePreviewManager.getState(
+      getFileTreePreviewGenerateContext(),
+    ),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getState(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getState(),
@@ -823,6 +845,7 @@ function runProjectSummary(): AppSnapshot {
     architectureHealthManager.markStale("Project summary re-scanned.");
     architectureRefactorTaskCardsManager.markStale("Project summary re-scanned.");
     safeScaffoldTargetManager.markStale("Project summary re-scanned.");
+    safeScaffoldFileTreePreviewManager.markStale("Project summary re-scanned.");
     architectureRefactorTaskBuilderHandoffManager.markStale(
       "Project summary re-scanned.",
     );
@@ -975,6 +998,7 @@ function resetSessionForProjectChange(): void {
   changedFilesTaskLinkManager.clearForProjectChange();
   architectureHealthManager.clearForProjectChange();
   safeScaffoldTargetManager.clearForProjectChange();
+  safeScaffoldFileTreePreviewManager.clearForProjectChange();
   architectureRefactorTaskCardsManager.clearForProjectChange();
   architectureRefactorTaskBuilderHandoffManager.clearForProjectChange();
   architectureRefactorTaskImplementationIntakeManager.clearForProjectChange();
@@ -1141,6 +1165,9 @@ function openProjectPath(
       );
       architectureHealthManager.restoreSaved(saved.architectureHealth ?? null);
       safeScaffoldTargetManager.restoreSaved(saved.safeScaffoldTarget ?? null);
+      safeScaffoldFileTreePreviewManager.restoreSaved(
+        saved.safeScaffoldFileTreePreview ?? null,
+      );
       architectureRefactorTaskCardsManager.restoreSaved(
         saved.architectureRefactorTaskCards ?? null,
       );
@@ -3744,6 +3771,7 @@ function registerIpc(): void {
     blueprintManager.saveImportedBlueprint();
     blueprintTaskCardsManager.clear();
     taskCardBuilderHandoffManager.clear();
+    safeScaffoldFileTreePreviewManager.markStale("Blueprint imported/saved.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -3754,6 +3782,7 @@ function registerIpc(): void {
     blueprintManager.clearImportedBlueprint();
     blueprintTaskCardsManager.clear();
     taskCardBuilderHandoffManager.clear();
+    safeScaffoldFileTreePreviewManager.markStale("Blueprint cleared.");
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4034,6 +4063,9 @@ function registerIpc(): void {
       planningStyleManager.getStyle(),
     );
     architectureHealthManager.markStale("Blueprint task cards regenerated.");
+    safeScaffoldFileTreePreviewManager.markStale(
+      "Blueprint task cards regenerated.",
+    );
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4042,6 +4074,9 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC_CHANNELS.clearBlueprintPhaseTaskCards, () => {
     blueprintTaskCardsManager.clear();
+    safeScaffoldFileTreePreviewManager.markStale(
+      "Blueprint task cards cleared.",
+    );
     syncTaskCardBuilderHandoffWithCards();
     persistSessionHistory();
     broadcastSnapshot();
@@ -4801,6 +4836,9 @@ function registerIpc(): void {
 
     const projectRoot = safetyGate.getProject()?.normalizedPath ?? null;
     safeScaffoldTargetManager.setTargetPath(result.filePaths[0], projectRoot);
+    safeScaffoldFileTreePreviewManager.markStale(
+      "Safe Scaffold target folder changed.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -4808,6 +4846,9 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC_CHANNELS.clearSafeScaffoldTargetFolder, () => {
     safeScaffoldTargetManager.clearTarget();
+    safeScaffoldFileTreePreviewManager.markStale(
+      "Safe Scaffold target folder cleared.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -4816,7 +4857,32 @@ function registerIpc(): void {
   ipcMain.handle(IPC_CHANNELS.refreshSafeScaffoldTargetSafety, () => {
     const projectRoot = safetyGate.getProject()?.normalizedPath ?? null;
     safeScaffoldTargetManager.refreshCheck(projectRoot);
+    safeScaffoldFileTreePreviewManager.markStale(
+      "Safe Scaffold target folder safety refreshed.",
+    );
     persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.generateSafeScaffoldFileTreePreview, () => {
+    safeScaffoldFileTreePreviewManager.generate(
+      getFileTreePreviewGenerateContext(),
+    );
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.clearSafeScaffoldFileTreePreview, () => {
+    safeScaffoldFileTreePreviewManager.clear();
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.recordCopySafeScaffoldFileTreePreview, () => {
+    safeScaffoldFileTreePreviewManager.recordCopy();
     broadcastSnapshot();
     return buildSnapshot();
   });
