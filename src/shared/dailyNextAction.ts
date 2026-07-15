@@ -105,6 +105,9 @@ export type DailyNextActionKind =
   | "generate-local-planner-build-brief"
   | "regenerate-local-planner-build-brief"
   | "copy-local-planner-build-brief"
+  | "paste-local-planner-response"
+  | "revise-local-planner-response"
+  | "local-planner-response-accepted"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -221,6 +224,11 @@ export interface DailyNextActionInput {
   /** Stage 131: Local Planner Build Brief (low priority). */
   localPlannerBuildBriefExists?: boolean;
   localPlannerBuildBriefStale?: boolean;
+  /** Stage 133: Local Planner Response Import (low priority). */
+  localPlannerResponseImportExists?: boolean;
+  localPlannerResponseImportStale?: boolean;
+  localPlannerResponseImportStatus?: "Good" | "Caution" | "Blocked" | null;
+  localPlannerResponseImportAccepted?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -405,6 +413,12 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
     "Opens Build Mode to regenerate a stale Local Planner Build Brief.",
   "copy-local-planner-build-brief":
     "Opens Build Mode so you can copy the Local Planner Build Brief into a local model.",
+  "paste-local-planner-response":
+    "Opens Build Mode to paste a local planner response into NTTC for review.",
+  "revise-local-planner-response":
+    "Opens Build Mode to revise the local planner response before preparing a coder prompt.",
+  "local-planner-response-accepted":
+    "Planner response is accepted. Next stage can generate a local coder task prompt.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1916,6 +1930,10 @@ export function calculateDailyNextAction(
       const writeBlocked = Boolean(input.safeScaffoldWriteBlocked);
       const plannerBriefExists = Boolean(input.localPlannerBuildBriefExists);
       const plannerBriefStale = Boolean(input.localPlannerBuildBriefStale);
+      const responseExists = Boolean(input.localPlannerResponseImportExists);
+      const responseStale = Boolean(input.localPlannerResponseImportStale);
+      const responseAccepted = Boolean(input.localPlannerResponseImportAccepted);
+      const responseStatus = input.localPlannerResponseImportStatus ?? null;
       if (writeResultExists) {
         if (plannerBriefStale) {
           return make(
@@ -1945,10 +1963,68 @@ export function calculateDailyNextAction(
             freshness,
           );
         }
+        if (!responseExists || responseStale) {
+          return make(
+            "paste-local-planner-response",
+            "Paste a local planner response into NTTC for review",
+            "Paste a local planner response into NTTC for review.",
+            button(
+              "Open Build Tab",
+              "paste-local-planner-response",
+              "navigate",
+            ),
+            button(
+              "Open Build Tab",
+              "copy-local-planner-build-brief",
+              "navigate",
+            ),
+            freshness,
+          );
+        }
+        if (responseAccepted) {
+          return make(
+            "local-planner-response-accepted",
+            "Planner response is accepted. Next stage can generate a local coder task prompt",
+            "Planner response is accepted. Next stage can generate a local coder task prompt.",
+            button(
+              "Open Build Tab",
+              "local-planner-response-accepted",
+              "navigate",
+            ),
+            button(
+              "Open Build Tab",
+              "review-written-safe-scaffold-files",
+              "navigate",
+            ),
+            freshness,
+          );
+        }
+        if (
+          responseStatus === "Blocked" ||
+          responseStatus === "Caution" ||
+          (responseExists && !responseAccepted)
+        ) {
+          return make(
+            "revise-local-planner-response",
+            "Revise the local planner response before preparing a coder prompt",
+            "Revise the local planner response before preparing a coder prompt.",
+            button(
+              "Open Build Tab",
+              "revise-local-planner-response",
+              "navigate",
+            ),
+            button(
+              "Open Build Tab",
+              "copy-local-planner-build-brief",
+              "navigate",
+            ),
+            freshness,
+          );
+        }
         return make(
           "copy-local-planner-build-brief",
-          "Copy the Local Planner Build Brief into a local model and import the response in a later stage",
-          "Copy the Local Planner Build Brief into a local model and import the response in a later stage.",
+          "Copy the Local Planner Build Brief into a local model and import the response",
+          "Copy the Local Planner Build Brief into a local model and import the response.",
           button(
             "Open Build Tab",
             "copy-local-planner-build-brief",

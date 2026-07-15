@@ -286,6 +286,14 @@ const IPC_CHANNELS = {
   clearLocalPlannerBuildBrief: "nttc:clear-local-planner-build-brief",
   recordCopyLocalPlannerBuildBrief:
     "nttc:record-copy-local-planner-build-brief",
+  setLocalPlannerResponseDraftText:
+    "nttc:set-local-planner-response-draft-text",
+  analyzeLocalPlannerResponse: "nttc:analyze-local-planner-response",
+  clearLocalPlannerResponse: "nttc:clear-local-planner-response",
+  recordCopyLocalPlannerResponseSummary:
+    "nttc:record-copy-local-planner-response-summary",
+  markLocalPlannerResponseAcceptedForCoderPromptPrep:
+    "nttc:mark-local-planner-response-accepted-for-coder-prompt-prep",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -1098,6 +1106,23 @@ const api: NttcApi = {
 
   recordCopyLocalPlannerBuildBrief: (): Promise<AppSnapshot> =>
     ipcRenderer.invoke(IPC_CHANNELS.recordCopyLocalPlannerBuildBrief),
+
+  setLocalPlannerResponseDraftText: (text: string): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.setLocalPlannerResponseDraftText, text),
+
+  analyzeLocalPlannerResponse: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.analyzeLocalPlannerResponse),
+
+  clearLocalPlannerResponse: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearLocalPlannerResponse),
+
+  recordCopyLocalPlannerResponseSummary: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.recordCopyLocalPlannerResponseSummary),
+
+  markLocalPlannerResponseAcceptedForCoderPromptPrep: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.markLocalPlannerResponseAcceptedForCoderPromptPrep,
+    ),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,

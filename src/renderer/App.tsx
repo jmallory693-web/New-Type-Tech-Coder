@@ -87,6 +87,9 @@ import { buildBlueprintTabSectionProps } from "./components/blueprintTabSectionP
 import {
   emptyLocalPlannerBuildBriefState,
 } from "../shared/buildModeLocalPlannerBuildBrief";
+import {
+  emptyLocalPlannerResponseImportState,
+} from "../shared/buildModeLocalPlannerResponseImport";
 import { BuildModeTab } from "./components/BuildModeTab";
 import { ReportsArchitectureSection } from "./components/ReportsArchitectureSection";
 import { buildReportsArchitectureSectionProps } from "./components/reportsArchitectureSectionProps";
@@ -615,6 +618,7 @@ const emptySafeScaffoldWrite = {
 };
 
 const emptyLocalPlannerBuildBrief = emptyLocalPlannerBuildBriefState();
+const emptyLocalPlannerResponseImport = emptyLocalPlannerResponseImportState();
 
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
@@ -755,6 +759,7 @@ const emptySnapshot: AppSnapshot = {
   safeScaffoldFinalConfirmation: emptySafeScaffoldFinalConfirmation,
   safeScaffoldWrite: emptySafeScaffoldWrite,
   localPlannerBuildBrief: emptyLocalPlannerBuildBrief,
+  localPlannerResponseImport: emptyLocalPlannerResponseImport,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4768,6 +4773,8 @@ export function App() {
     snapshot.safeScaffoldWrite ?? emptySafeScaffoldWrite;
   const localPlannerBuildBrief =
     snapshot.localPlannerBuildBrief ?? emptyLocalPlannerBuildBrief;
+  const localPlannerResponseImport =
+    snapshot.localPlannerResponseImport ?? emptyLocalPlannerResponseImport;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5134,6 +5141,16 @@ export function App() {
     ),
     localPlannerBuildBriefExists: Boolean(localPlannerBuildBrief.saved),
     localPlannerBuildBriefStale: Boolean(localPlannerBuildBrief.saved?.stale),
+    localPlannerResponseImportExists: Boolean(localPlannerResponseImport.saved),
+    localPlannerResponseImportStale: Boolean(
+      localPlannerResponseImport.saved?.stale,
+    ),
+    localPlannerResponseImportStatus:
+      localPlannerResponseImport.saved?.status ?? null,
+    localPlannerResponseImportAccepted: Boolean(
+      localPlannerResponseImport.saved?.acceptedForCoderPromptPrep &&
+        !localPlannerResponseImport.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5240,6 +5257,16 @@ export function App() {
     ),
     localPlannerBuildBriefExists: Boolean(localPlannerBuildBrief.saved),
     localPlannerBuildBriefStale: Boolean(localPlannerBuildBrief.saved?.stale),
+    localPlannerResponseImportExists: Boolean(localPlannerResponseImport.saved),
+    localPlannerResponseImportStale: Boolean(
+      localPlannerResponseImport.saved?.stale,
+    ),
+    localPlannerResponseImportStatus:
+      localPlannerResponseImport.saved?.status ?? null,
+    localPlannerResponseImportAccepted: Boolean(
+      localPlannerResponseImport.saved?.acceptedForCoderPromptPrep &&
+        !localPlannerResponseImport.saved?.stale,
+    ),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -8551,6 +8578,16 @@ export function App() {
         );
         return;
       }
+      case "paste-local-planner-response":
+      case "revise-local-planner-response":
+      case "local-planner-response-accepted": {
+        await navigateOnly(
+          "build",
+          "build-mode-local-planner-response-import",
+          "Paste or review the Local Planner Response Import (untrusted claim — no AI call).",
+        );
+        return;
+      }
       default: {
         const _exhaustive: never = kind;
         void _exhaustive;
@@ -9009,6 +9046,7 @@ export function App() {
             safeScaffoldFinalConfirmation={safeScaffoldFinalConfirmation}
             safeScaffoldWrite={safeScaffoldWrite}
             localPlannerBuildBrief={localPlannerBuildBrief}
+            localPlannerResponseImport={localPlannerResponseImport}
             taskCardOptions={(blueprint.phaseTaskCards.saved?.cards ?? []).map(
               (c) => ({ id: c.id, title: c.title }),
             )}
@@ -9184,6 +9222,40 @@ export function App() {
                   "Clipboard write failed.",
                 );
               }
+            }}
+            onSetLocalPlannerResponseDraftText={async (text) => {
+              const next =
+                await window.nttc.setLocalPlannerResponseDraftText(text);
+              setSnapshot(next);
+            }}
+            onAnalyzeLocalPlannerResponse={async () => {
+              const next = await window.nttc.analyzeLocalPlannerResponse();
+              setSnapshot(next);
+            }}
+            onClearLocalPlannerResponse={async () => {
+              const next = await window.nttc.clearLocalPlannerResponse();
+              setSnapshot(next);
+            }}
+            onCopyLocalPlannerResponseSummary={async () => {
+              const md = localPlannerResponseImport.saved?.summaryMarkdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopyLocalPlannerResponseSummary();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Local Planner Response Summary failed",
+                  "Clipboard write failed.",
+                );
+              }
+            }}
+            onMarkLocalPlannerResponseAccepted={async () => {
+              const next =
+                await window.nttc.markLocalPlannerResponseAcceptedForCoderPromptPrep();
+              setSnapshot(next);
             }}
           />
         ) : null}

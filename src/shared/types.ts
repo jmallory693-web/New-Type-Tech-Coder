@@ -2007,6 +2007,8 @@ export interface ProjectHistoryRecord {
   safeScaffoldWriteResult: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteResultRecord | null;
   /** Stage 131: Local Planner Build Brief (copy/paste prompt only). */
   localPlannerBuildBrief: import("./buildModeLocalPlannerBuildBrief").LocalPlannerBuildBriefRecord | null;
+  /** Stage 133: Local Planner Response Import (paste/parse/review only). */
+  localPlannerResponseImport: import("./buildModeLocalPlannerResponseImport").LocalPlannerResponseImportRecord | null;
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
   architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
   architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -2104,6 +2106,8 @@ export interface AppSnapshot {
   safeScaffoldWrite: import("./buildModeSafeScaffoldWrite").SafeScaffoldWriteState;
   /** Stage 131: Local Planner Build Brief state. */
   localPlannerBuildBrief: import("./buildModeLocalPlannerBuildBrief").LocalPlannerBuildBriefState;
+  /** Stage 133: Local Planner Response Import state. */
+  localPlannerResponseImport: import("./buildModeLocalPlannerResponseImport").LocalPlannerResponseImportState;
   /** Stage 102: Architecture Refactor Task Cards (planning only). */
   architectureRefactorTaskCards: ArchitectureRefactorTaskCardsState;
   /** Stage 104: Architecture Refactor Builder Handoff (text-only). */
@@ -2380,6 +2384,14 @@ export const IPC_CHANNELS = {
   clearLocalPlannerBuildBrief: "nttc:clear-local-planner-build-brief",
   recordCopyLocalPlannerBuildBrief:
     "nttc:record-copy-local-planner-build-brief",
+  setLocalPlannerResponseDraftText:
+    "nttc:set-local-planner-response-draft-text",
+  analyzeLocalPlannerResponse: "nttc:analyze-local-planner-response",
+  clearLocalPlannerResponse: "nttc:clear-local-planner-response",
+  recordCopyLocalPlannerResponseSummary:
+    "nttc:record-copy-local-planner-response-summary",
+  markLocalPlannerResponseAcceptedForCoderPromptPrep:
+    "nttc:mark-local-planner-response-accepted-for-coder-prompt-prep",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -2673,6 +2685,11 @@ export interface NttcApi {
   }) => Promise<AppSnapshot>;
   clearLocalPlannerBuildBrief: () => Promise<AppSnapshot>;
   recordCopyLocalPlannerBuildBrief: () => Promise<AppSnapshot>;
+  setLocalPlannerResponseDraftText: (text: string) => Promise<AppSnapshot>;
+  analyzeLocalPlannerResponse: () => Promise<AppSnapshot>;
+  clearLocalPlannerResponse: () => Promise<AppSnapshot>;
+  recordCopyLocalPlannerResponseSummary: () => Promise<AppSnapshot>;
+  markLocalPlannerResponseAcceptedForCoderPromptPrep: () => Promise<AppSnapshot>;
   setPlanningStyle: (style: PlanningStyleId) => Promise<AppSnapshot>;
   setReportsPanelCollapsed: (
     panelId: string,

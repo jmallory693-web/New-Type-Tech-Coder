@@ -125,6 +125,10 @@ export interface WorkflowGuidanceInput {
   /** Stage 131: Local Planner Build Brief. */
   localPlannerBuildBriefExists?: boolean;
   localPlannerBuildBriefStale?: boolean;
+  /** Stage 133: Local Planner Response Import. */
+  localPlannerResponseImportExists?: boolean;
+  localPlannerResponseImportStale?: boolean;
+  localPlannerResponseImportAccepted?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -287,6 +291,11 @@ function isCompleted(
         input.localPlannerBuildBriefExists &&
           !input.localPlannerBuildBriefStale,
       );
+    case "build-mode-local-planner-response-import":
+      return Boolean(
+        input.localPlannerResponseImportExists &&
+          !input.localPlannerResponseImportStale,
+      );
     default:
       return false;
   }
@@ -354,6 +363,10 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "regenerate-local-planner-build-brief":
       "build-mode-local-planner-build-brief",
     "copy-local-planner-build-brief": "build-mode-local-planner-build-brief",
+    "paste-local-planner-response": "build-mode-local-planner-response-import",
+    "revise-local-planner-response": "build-mode-local-planner-response-import",
+    "local-planner-response-accepted":
+      "build-mode-local-planner-response-import",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -545,6 +558,17 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Local Planner Build Brief ready (copy/paste only — no AI call).";
       }
       return "Generate a Local Planner Build Brief for local LLM/SLM planning.";
+    case "build-mode-local-planner-response-import":
+      if (input.localPlannerResponseImportStale) {
+        return "Local Planner Response Import is stale — re-analyze after brief/task/scaffold changes.";
+      }
+      if (input.localPlannerResponseImportAccepted) {
+        return "Planner response accepted for coder prompt prep (metadata only).";
+      }
+      if (input.localPlannerResponseImportExists) {
+        return "Local Planner Response analyzed (untrusted claim — no AI call).";
+      }
+      return "Paste a local planner response into NTTC for review.";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -740,6 +764,11 @@ export function buildWorkflowProgress(
       id: "build-mode-local-planner-build-brief",
       label: "Local Planner Build Brief",
       focusId: "build-mode-local-planner-build-brief",
+    },
+    {
+      id: "build-mode-local-planner-response-import",
+      label: "Local Planner Response Import",
+      focusId: "build-mode-local-planner-response-import",
     },
   ];
 

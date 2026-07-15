@@ -7,6 +7,7 @@ import type { SafeScaffoldWriteManifestPreviewState } from "../../shared/buildMo
 import type { SafeScaffoldFinalConfirmationState } from "../../shared/buildModeFinalConfirmation";
 import type { SafeScaffoldWriteState } from "../../shared/buildModeSafeScaffoldWrite";
 import type { LocalPlannerBuildBriefState } from "../../shared/buildModeLocalPlannerBuildBrief";
+import type { LocalPlannerResponseImportState } from "../../shared/buildModeLocalPlannerResponseImport";
 import {
   LOCAL_PLANNER_BUILD_BRIEF_COPY_PASTE_NOTE,
   LOCAL_PLANNER_BUILD_BRIEF_NO_AI_NOTE,
@@ -16,6 +17,12 @@ import {
   type LocalPlannerStrictness,
   type LocalPlannerTargetModelType,
 } from "../../shared/buildModeLocalPlannerBuildBrief";
+import {
+  LOCAL_PLANNER_RESPONSE_ACCEPT_NOTE,
+  LOCAL_PLANNER_RESPONSE_IMPORT_GUIDE_NOTE,
+  LOCAL_PLANNER_RESPONSE_UI_LABELS,
+  LOCAL_PLANNER_RESPONSE_UNTRUSTED_NOTE,
+} from "../../shared/buildModeLocalPlannerResponseImport";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -70,6 +77,7 @@ export function BuildModeTab({
   safeScaffoldFinalConfirmation,
   safeScaffoldWrite,
   localPlannerBuildBrief,
+  localPlannerResponseImport,
   taskCardOptions,
   onOpenBlueprint,
   onSelectTargetFolder,
@@ -95,6 +103,11 @@ export function BuildModeTab({
   onGenerateLocalPlannerBuildBrief,
   onClearLocalPlannerBuildBrief,
   onCopyLocalPlannerBuildBrief,
+  onSetLocalPlannerResponseDraftText,
+  onAnalyzeLocalPlannerResponse,
+  onClearLocalPlannerResponse,
+  onCopyLocalPlannerResponseSummary,
+  onMarkLocalPlannerResponseAccepted,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
@@ -104,6 +117,7 @@ export function BuildModeTab({
   safeScaffoldFinalConfirmation: SafeScaffoldFinalConfirmationState;
   safeScaffoldWrite: SafeScaffoldWriteState;
   localPlannerBuildBrief: LocalPlannerBuildBriefState;
+  localPlannerResponseImport: LocalPlannerResponseImportState;
   taskCardOptions: Array<{ id: string; title: string }>;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
@@ -137,6 +151,11 @@ export function BuildModeTab({
   onGenerateLocalPlannerBuildBrief: () => void | Promise<void>;
   onClearLocalPlannerBuildBrief: () => void | Promise<void>;
   onCopyLocalPlannerBuildBrief: () => void | Promise<void>;
+  onSetLocalPlannerResponseDraftText: (text: string) => void | Promise<void>;
+  onAnalyzeLocalPlannerResponse: () => void | Promise<void>;
+  onClearLocalPlannerResponse: () => void | Promise<void>;
+  onCopyLocalPlannerResponseSummary: () => void | Promise<void>;
+  onMarkLocalPlannerResponseAccepted: () => void | Promise<void>;
 }) {
   const readiness = deriveBuildModeReadiness(
     blueprint,
@@ -199,6 +218,8 @@ export function BuildModeTab({
     SAFE_SCAFFOLD_WRITE_UI_LABELS[safeScaffoldWrite.uiStatus];
   const plannerUi =
     LOCAL_PLANNER_BUILD_BRIEF_UI_LABELS[localPlannerBuildBrief.uiStatus];
+  const responseUi =
+    LOCAL_PLANNER_RESPONSE_UI_LABELS[localPlannerResponseImport.uiStatus];
 
   const [ackBoundaries, setAckBoundaries] = useState(false);
   const [ackStage127, setAckStage127] = useState(false);
@@ -1384,6 +1405,177 @@ export function BuildModeTab({
             {localPlannerBuildBrief.statusMessage ? (
               <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
                 {localPlannerBuildBrief.statusMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="section-divider" />
+
+          <div data-focus-id="build-mode-local-planner-response-import">
+            <div className="field-label">Local Planner Response Import</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              {LOCAL_PLANNER_RESPONSE_UNTRUSTED_NOTE}
+            </p>
+            <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+              {LOCAL_PLANNER_RESPONSE_IMPORT_GUIDE_NOTE}
+            </p>
+            <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+              {LOCAL_PLANNER_RESPONSE_ACCEPT_NOTE}
+            </p>
+
+            <div className="field-label" style={{ marginTop: "0.75rem" }}>
+              Paste Planner Response
+            </div>
+            <textarea
+              rows={12}
+              value={localPlannerResponseImport.draftText}
+              disabled={localPlannerResponseImport.busy}
+              onChange={(e) =>
+                void onSetLocalPlannerResponseDraftText(e.target.value)
+              }
+              placeholder="Paste the local planner model response here. NTTC will parse it as an untrusted claim (no AI call)."
+              style={{ width: "100%", fontFamily: "inherit" }}
+            />
+
+            <div
+              style={{
+                marginTop: "0.75rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => void onAnalyzeLocalPlannerResponse()}
+                disabled={
+                  localPlannerResponseImport.busy ||
+                  !localPlannerResponseImport.canAnalyze
+                }
+              >
+                Analyze Planner Response
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyLocalPlannerResponseSummary()}
+                disabled={
+                  localPlannerResponseImport.busy ||
+                  !localPlannerResponseImport.saved?.summaryMarkdown
+                }
+              >
+                Copy Planner Response Summary
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearLocalPlannerResponse()}
+                disabled={
+                  localPlannerResponseImport.busy ||
+                  (!localPlannerResponseImport.saved &&
+                    !localPlannerResponseImport.draftText.trim())
+                }
+              >
+                Clear Planner Response
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onMarkLocalPlannerResponseAccepted()}
+                disabled={
+                  localPlannerResponseImport.busy ||
+                  !localPlannerResponseImport.canAccept ||
+                  Boolean(
+                    localPlannerResponseImport.saved?.acceptedForCoderPromptPrep,
+                  )
+                }
+              >
+                Mark Response Accepted For Coder Prompt Prep
+              </button>
+            </div>
+
+            <p className="field-value" style={{ marginTop: "0.5rem" }}>
+              Status: <strong>{responseUi}</strong>
+            </p>
+
+            {localPlannerResponseImport.readinessBlockedReasons.length > 0 &&
+            !localPlannerResponseImport.canAnalyze &&
+            !localPlannerResponseImport.saved ? (
+              <ul className="workflow-list">
+                {localPlannerResponseImport.readinessBlockedReasons.map(
+                  (reason) => (
+                    <li key={reason}>{reason}</li>
+                  ),
+                )}
+              </ul>
+            ) : null}
+
+            {localPlannerResponseImport.saved ? (
+              <>
+                <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                  Analyzed at:{" "}
+                  <strong>{localPlannerResponseImport.saved.analyzedAt}</strong>
+                  {localPlannerResponseImport.saved.stale ? (
+                    <span> · stale</span>
+                  ) : null}
+                </p>
+                <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                  Summary status:{" "}
+                  <strong>{localPlannerResponseImport.saved.status}</strong>
+                  {" · "}
+                  Decision:{" "}
+                  <strong>{localPlannerResponseImport.saved.decision}</strong>
+                </p>
+                {localPlannerResponseImport.saved.acceptedForCoderPromptPrep ? (
+                  <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                    Accepted for coder prompt prep at:{" "}
+                    <strong>
+                      {localPlannerResponseImport.saved.acceptedAt ?? "(yes)"}
+                    </strong>
+                    {" "}
+                    (metadata only)
+                  </p>
+                ) : null}
+                {localPlannerResponseImport.saved.parsed.recommendedNextTask ? (
+                  <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                    Recommended next task:{" "}
+                    <strong>
+                      {
+                        localPlannerResponseImport.saved.parsed
+                          .recommendedNextTask
+                      }
+                    </strong>
+                  </p>
+                ) : null}
+                {localPlannerResponseImport.saved.safetyWarnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {localPlannerResponseImport.saved.safetyWarnings.map((w) => (
+                      <li key={w.id}>
+                        [{w.severity}] {w.message}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Response summary markdown
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "28rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {localPlannerResponseImport.saved.summaryMarkdown}
+                </pre>
+              </>
+            ) : null}
+            {localPlannerResponseImport.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {localPlannerResponseImport.statusMessage}
               </p>
             ) : null}
           </div>

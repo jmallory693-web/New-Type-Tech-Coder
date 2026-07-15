@@ -82,6 +82,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Safe Scaffold Final Confirmation records readiness for a future write stage. It still does not create files.",
       "Safe Scaffold Write creates new files only after final confirmation and an immediate safety re-check. It never overwrites files, runs commands, installs packages, or applies patches.",
       "Local Planner Build Briefs help test local LLM/SLM planning. NTTC generates a copy/paste prompt but does not send project data to a model automatically.",
+      "Local Planner Response Import lets you paste a local model's planning answer back into NTTC. NTTC parses it as an untrusted claim and checks for scope/safety issues.",
     ],
   },
   {
