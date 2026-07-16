@@ -83,6 +83,7 @@ export const QUICK_START_GUIDE_SECTIONS: QuickStartGuideSection[] = [
       "Safe Scaffold Write creates new files only after final confirmation and an immediate safety re-check. It never overwrites files, runs commands, installs packages, or applies patches.",
       "Local Planner Build Briefs help test local LLM/SLM planning. NTTC generates a copy/paste prompt but does not send project data to a model automatically.",
       "Local Planner Response Import lets you paste a local model's planning answer back into NTTC. NTTC parses it as an untrusted claim and checks for scope/safety issues.",
+      "Local Coder Task Prompts turn an accepted local planner response into a bounded copy/paste prompt for a local coder model. NTTC does not send it automatically.",
     ],
   },
   {

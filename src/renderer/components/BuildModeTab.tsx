@@ -8,6 +8,7 @@ import type { SafeScaffoldFinalConfirmationState } from "../../shared/buildModeF
 import type { SafeScaffoldWriteState } from "../../shared/buildModeSafeScaffoldWrite";
 import type { LocalPlannerBuildBriefState } from "../../shared/buildModeLocalPlannerBuildBrief";
 import type { LocalPlannerResponseImportState } from "../../shared/buildModeLocalPlannerResponseImport";
+import type { LocalCoderTaskPromptState } from "../../shared/buildModeLocalCoderTaskPrompt";
 import {
   LOCAL_PLANNER_BUILD_BRIEF_COPY_PASTE_NOTE,
   LOCAL_PLANNER_BUILD_BRIEF_NO_AI_NOTE,
@@ -23,6 +24,13 @@ import {
   LOCAL_PLANNER_RESPONSE_UI_LABELS,
   LOCAL_PLANNER_RESPONSE_UNTRUSTED_NOTE,
 } from "../../shared/buildModeLocalPlannerResponseImport";
+import {
+  LOCAL_CODER_PROMPT_STYLE_LABELS,
+  LOCAL_CODER_TASK_PROMPT_COPY_PASTE_NOTE,
+  LOCAL_CODER_TASK_PROMPT_NO_AI_NOTE,
+  LOCAL_CODER_TASK_PROMPT_UI_LABELS,
+  type LocalCoderPromptStyle,
+} from "../../shared/buildModeLocalCoderTaskPrompt";
 import {
   BUILD_MODE_INACTIVE_BANNER,
   BUILD_MODE_SAFETY_CHARTER_RULES,
@@ -78,6 +86,7 @@ export function BuildModeTab({
   safeScaffoldWrite,
   localPlannerBuildBrief,
   localPlannerResponseImport,
+  localCoderTaskPrompt,
   taskCardOptions,
   onOpenBlueprint,
   onSelectTargetFolder,
@@ -108,6 +117,10 @@ export function BuildModeTab({
   onClearLocalPlannerResponse,
   onCopyLocalPlannerResponseSummary,
   onMarkLocalPlannerResponseAccepted,
+  onSetLocalCoderTaskPromptOptions,
+  onGenerateLocalCoderTaskPrompt,
+  onClearLocalCoderTaskPrompt,
+  onCopyLocalCoderTaskPrompt,
 }: {
   blueprint: BlueprintState;
   safeScaffoldTarget: SafeScaffoldTargetState;
@@ -118,6 +131,7 @@ export function BuildModeTab({
   safeScaffoldWrite: SafeScaffoldWriteState;
   localPlannerBuildBrief: LocalPlannerBuildBriefState;
   localPlannerResponseImport: LocalPlannerResponseImportState;
+  localCoderTaskPrompt: LocalCoderTaskPromptState;
   taskCardOptions: Array<{ id: string; title: string }>;
   onOpenBlueprint: () => void;
   onSelectTargetFolder: () => void | Promise<void>;
@@ -156,6 +170,12 @@ export function BuildModeTab({
   onClearLocalPlannerResponse: () => void | Promise<void>;
   onCopyLocalPlannerResponseSummary: () => void | Promise<void>;
   onMarkLocalPlannerResponseAccepted: () => void | Promise<void>;
+  onSetLocalCoderTaskPromptOptions: (options: {
+    promptStyle?: LocalCoderPromptStyle;
+  }) => void | Promise<void>;
+  onGenerateLocalCoderTaskPrompt: () => void | Promise<void>;
+  onClearLocalCoderTaskPrompt: () => void | Promise<void>;
+  onCopyLocalCoderTaskPrompt: () => void | Promise<void>;
 }) {
   const readiness = deriveBuildModeReadiness(
     blueprint,
@@ -220,6 +240,8 @@ export function BuildModeTab({
     LOCAL_PLANNER_BUILD_BRIEF_UI_LABELS[localPlannerBuildBrief.uiStatus];
   const responseUi =
     LOCAL_PLANNER_RESPONSE_UI_LABELS[localPlannerResponseImport.uiStatus];
+  const coderPromptUi =
+    LOCAL_CODER_TASK_PROMPT_UI_LABELS[localCoderTaskPrompt.uiStatus];
 
   const [ackBoundaries, setAckBoundaries] = useState(false);
   const [ackStage127, setAckStage127] = useState(false);
@@ -1576,6 +1598,149 @@ export function BuildModeTab({
             {localPlannerResponseImport.statusMessage ? (
               <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
                 {localPlannerResponseImport.statusMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="section-divider" />
+
+          <div data-focus-id="build-mode-local-coder-task-prompt">
+            <div className="field-label">Local Coder Task Prompt</div>
+            <p className="field-value muted" style={{ fontSize: "0.85rem" }}>
+              {LOCAL_CODER_TASK_PROMPT_COPY_PASTE_NOTE}
+            </p>
+            <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+              {LOCAL_CODER_TASK_PROMPT_NO_AI_NOTE}
+            </p>
+
+            <div className="field-label" style={{ marginTop: "0.75rem" }}>
+              Coder prompt style
+            </div>
+            <select
+              value={localCoderTaskPrompt.options.promptStyle}
+              disabled={localCoderTaskPrompt.busy}
+              onChange={(e) =>
+                void onSetLocalCoderTaskPromptOptions({
+                  promptStyle: e.target.value as LocalCoderPromptStyle,
+                })
+              }
+            >
+              {(
+                Object.keys(
+                  LOCAL_CODER_PROMPT_STYLE_LABELS,
+                ) as LocalCoderPromptStyle[]
+              ).map((key) => (
+                <option key={key} value={key}>
+                  {LOCAL_CODER_PROMPT_STYLE_LABELS[key]}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                marginTop: "0.75rem",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+              }}
+            >
+              <button
+                type="button"
+                className="action-btn primary"
+                onClick={() => void onGenerateLocalCoderTaskPrompt()}
+                disabled={
+                  localCoderTaskPrompt.busy || !localCoderTaskPrompt.canGenerate
+                }
+              >
+                Generate Coder Prompt
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onCopyLocalCoderTaskPrompt()}
+                disabled={
+                  localCoderTaskPrompt.busy ||
+                  !localCoderTaskPrompt.saved?.markdown
+                }
+              >
+                Copy Coder Prompt
+              </button>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void onClearLocalCoderTaskPrompt()}
+                disabled={
+                  localCoderTaskPrompt.busy || !localCoderTaskPrompt.saved
+                }
+              >
+                Clear Coder Prompt
+              </button>
+            </div>
+
+            <p className="field-value" style={{ marginTop: "0.5rem" }}>
+              Status: <strong>{coderPromptUi}</strong>
+            </p>
+
+            {localCoderTaskPrompt.readinessBlockedReasons.length > 0 &&
+            !localCoderTaskPrompt.canGenerate ? (
+              <ul className="workflow-list">
+                {localCoderTaskPrompt.readinessBlockedReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            ) : null}
+
+            {localCoderTaskPrompt.saved ? (
+              <>
+                <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                  Generated at:{" "}
+                  <strong>{localCoderTaskPrompt.saved.generatedAt}</strong>
+                  {localCoderTaskPrompt.saved.stale ? (
+                    <span> · stale</span>
+                  ) : null}
+                </p>
+                <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                  Style:{" "}
+                  <strong>
+                    {
+                      LOCAL_CODER_PROMPT_STYLE_LABELS[
+                        localCoderTaskPrompt.saved.promptStyle
+                      ]
+                    }
+                  </strong>
+                </p>
+                {localCoderTaskPrompt.saved.recommendedTask ? (
+                  <p className="field-value" style={{ fontSize: "0.85rem" }}>
+                    Task:{" "}
+                    <strong>{localCoderTaskPrompt.saved.recommendedTask}</strong>
+                  </p>
+                ) : null}
+                {localCoderTaskPrompt.saved.warnings.length > 0 ? (
+                  <ul className="workflow-list">
+                    {localCoderTaskPrompt.saved.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="field-label" style={{ marginTop: "0.5rem" }}>
+                  Coder prompt markdown
+                </div>
+                <pre
+                  className="code-block"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    maxHeight: "28rem",
+                    overflow: "auto",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  {localCoderTaskPrompt.saved.markdown}
+                </pre>
+              </>
+            ) : null}
+            {localCoderTaskPrompt.statusMessage ? (
+              <p className="field-value muted" style={{ fontSize: "0.82rem" }}>
+                {localCoderTaskPrompt.statusMessage}
               </p>
             ) : null}
           </div>

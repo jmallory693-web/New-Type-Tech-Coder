@@ -294,6 +294,12 @@ const IPC_CHANNELS = {
     "nttc:record-copy-local-planner-response-summary",
   markLocalPlannerResponseAcceptedForCoderPromptPrep:
     "nttc:mark-local-planner-response-accepted-for-coder-prompt-prep",
+  setLocalCoderTaskPromptOptions:
+    "nttc:set-local-coder-task-prompt-options",
+  generateLocalCoderTaskPrompt: "nttc:generate-local-coder-task-prompt",
+  clearLocalCoderTaskPrompt: "nttc:clear-local-coder-task-prompt",
+  recordCopyLocalCoderTaskPrompt:
+    "nttc:record-copy-local-coder-task-prompt",
   setPlanningStyle: "nttc:set-planning-style",
   setReportsPanelCollapsed: "nttc:set-reports-panel-collapsed",
   applyFastDraftSetup: "nttc:apply-fast-draft-setup",
@@ -1123,6 +1129,22 @@ const api: NttcApi = {
     ipcRenderer.invoke(
       IPC_CHANNELS.markLocalPlannerResponseAcceptedForCoderPromptPrep,
     ),
+
+  setLocalCoderTaskPromptOptions: (options: {
+    promptStyle?: import("../shared/buildModeLocalCoderTaskPrompt").LocalCoderPromptStyle;
+  }): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.setLocalCoderTaskPromptOptions, options),
+
+  generateLocalCoderTaskPrompt: (options?: {
+    promptStyle?: import("../shared/buildModeLocalCoderTaskPrompt").LocalCoderPromptStyle;
+  }): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.generateLocalCoderTaskPrompt, options),
+
+  clearLocalCoderTaskPrompt: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.clearLocalCoderTaskPrompt),
+
+  recordCopyLocalCoderTaskPrompt: (): Promise<AppSnapshot> =>
+    ipcRenderer.invoke(IPC_CHANNELS.recordCopyLocalCoderTaskPrompt),
 
   setPlanningStyle: (
     style: import("../shared/types").PlanningStyleId,

@@ -129,6 +129,9 @@ export interface WorkflowGuidanceInput {
   localPlannerResponseImportExists?: boolean;
   localPlannerResponseImportStale?: boolean;
   localPlannerResponseImportAccepted?: boolean;
+  /** Stage 135: Local Coder Task Prompt. */
+  localCoderTaskPromptExists?: boolean;
+  localCoderTaskPromptStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -296,6 +299,10 @@ function isCompleted(
         input.localPlannerResponseImportExists &&
           !input.localPlannerResponseImportStale,
       );
+    case "build-mode-local-coder-task-prompt":
+      return Boolean(
+        input.localCoderTaskPromptExists && !input.localCoderTaskPromptStale,
+      );
     default:
       return false;
   }
@@ -367,6 +374,9 @@ function recommendedStepId(dailyNext: DailyNextAction): string | null {
     "revise-local-planner-response": "build-mode-local-planner-response-import",
     "local-planner-response-accepted":
       "build-mode-local-planner-response-import",
+    "generate-local-coder-task-prompt": "build-mode-local-coder-task-prompt",
+    "regenerate-local-coder-task-prompt": "build-mode-local-coder-task-prompt",
+    "copy-local-coder-task-prompt": "build-mode-local-coder-task-prompt",
     "generate-architecture-health-report": "architecture-health",
     "regenerate-architecture-health-report": "architecture-health",
     "review-monolith-risk-changed-files": "architecture-health",
@@ -569,6 +579,14 @@ function stepDetail(id: string, input: WorkflowGuidanceInput): string {
         return "Local Planner Response analyzed (untrusted claim — no AI call).";
       }
       return "Paste a local planner response into NTTC for review.";
+    case "build-mode-local-coder-task-prompt":
+      if (input.localCoderTaskPromptStale) {
+        return "Local Coder Task Prompt is stale — regenerate before using.";
+      }
+      if (input.localCoderTaskPromptExists) {
+        return "Local Coder Task Prompt ready (copy/paste only — no AI call).";
+      }
+      return "Generate a Local Coder Task Prompt from an accepted planner response.";
     case "blueprint-idea":
       return input.blueprintStatus?.ideaExists
         ? "Project idea captured on Blueprint tab."
@@ -769,6 +787,11 @@ export function buildWorkflowProgress(
       id: "build-mode-local-planner-response-import",
       label: "Local Planner Response Import",
       focusId: "build-mode-local-planner-response-import",
+    },
+    {
+      id: "build-mode-local-coder-task-prompt",
+      label: "Local Coder Task Prompt",
+      focusId: "build-mode-local-coder-task-prompt",
     },
   ];
 

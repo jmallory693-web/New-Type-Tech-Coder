@@ -71,6 +71,7 @@ import type { SafeScaffoldFinalConfirmationRecord } from "../../shared/buildMode
 import type { SafeScaffoldWriteResultRecord } from "../../shared/buildModeSafeScaffoldWrite";
 import type { LocalPlannerBuildBriefRecord } from "../../shared/buildModeLocalPlannerBuildBrief";
 import type { LocalPlannerResponseImportRecord } from "../../shared/buildModeLocalPlannerResponseImport";
+import type { LocalCoderTaskPromptRecord } from "../../shared/buildModeLocalCoderTaskPrompt";
 import type { TaskImplementationBuilderSource } from "../../shared/taskImplementationIntakeConstants";
 import type { ArchitectureRefactorImplementationBuilderSource } from "../../shared/architectureRefactorTasks/architectureRefactorTaskImplementationIntakeConstants";
 import type { SafetyGate } from "../safety/SafetyGate";
@@ -278,6 +279,7 @@ function migrateProjectRecords(
       safeScaffoldWriteResult: record.safeScaffoldWriteResult ?? null,
       localPlannerBuildBrief: record.localPlannerBuildBrief ?? null,
       localPlannerResponseImport: record.localPlannerResponseImport ?? null,
+      localCoderTaskPrompt: record.localCoderTaskPrompt ?? null,
       architectureRefactorTaskCards: record.architectureRefactorTaskCards ?? null,
       architectureRefactorTaskBuilderHandoff:
         record.architectureRefactorTaskBuilderHandoff ?? null,
@@ -605,6 +607,7 @@ export class HistoryStore {
     safeScaffoldWriteResult: SafeScaffoldWriteResultRecord | null;
     localPlannerBuildBrief: LocalPlannerBuildBriefRecord | null;
     localPlannerResponseImport: LocalPlannerResponseImportRecord | null;
+    localCoderTaskPrompt: LocalCoderTaskPromptRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -777,6 +780,7 @@ export class HistoryStore {
         safeScaffoldWriteResult: input.safeScaffoldWriteResult,
         localPlannerBuildBrief: input.localPlannerBuildBrief,
         localPlannerResponseImport: input.localPlannerResponseImport,
+        localCoderTaskPrompt: input.localCoderTaskPrompt,
         architectureRefactorTaskCards: input.architectureRefactorTaskCards,
         architectureRefactorTaskBuilderHandoff:
           input.architectureRefactorTaskBuilderHandoff,
@@ -1013,6 +1017,12 @@ export class HistoryStore {
         record.localPlannerResponseImport = previous.localPlannerResponseImport;
       }
       if (
+        !record.localCoderTaskPrompt &&
+        previous?.localCoderTaskPrompt
+      ) {
+        record.localCoderTaskPrompt = previous.localCoderTaskPrompt;
+      }
+      if (
         !record.architectureRefactorTaskCards &&
         previous?.architectureRefactorTaskCards
       ) {
@@ -1205,6 +1215,7 @@ export class HistoryStore {
     safeScaffoldWriteResult: SafeScaffoldWriteResultRecord | null;
     localPlannerBuildBrief: LocalPlannerBuildBriefRecord | null;
     localPlannerResponseImport: LocalPlannerResponseImportRecord | null;
+    localCoderTaskPrompt: LocalCoderTaskPromptRecord | null;
     architectureRefactorTaskCards: ArchitectureRefactorTaskCardsRecord | null;
     architectureRefactorTaskBuilderHandoff: ArchitectureRefactorTaskBuilderHandoffRecord | null;
     architectureRefactorTaskBuilderHandoffSelectedTaskId: string | null;
@@ -1827,6 +1838,7 @@ export class HistoryStore {
       safeScaffoldWriteResult: input.safeScaffoldWriteResult,
       localPlannerBuildBrief: input.localPlannerBuildBrief,
       localPlannerResponseImport: input.localPlannerResponseImport,
+      localCoderTaskPrompt: input.localCoderTaskPrompt,
       architectureRefactorTaskCards: input.architectureRefactorTaskCards,
       architectureRefactorTaskBuilderHandoff:
         input.architectureRefactorTaskBuilderHandoff,

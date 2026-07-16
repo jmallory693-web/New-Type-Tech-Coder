@@ -108,6 +108,9 @@ export type DailyNextActionKind =
   | "paste-local-planner-response"
   | "revise-local-planner-response"
   | "local-planner-response-accepted"
+  | "generate-local-coder-task-prompt"
+  | "regenerate-local-coder-task-prompt"
+  | "copy-local-coder-task-prompt"
   | "ready-continue";
 
 export type DailyNextActionMode = "run" | "navigate";
@@ -229,6 +232,9 @@ export interface DailyNextActionInput {
   localPlannerResponseImportStale?: boolean;
   localPlannerResponseImportStatus?: "Good" | "Caution" | "Blocked" | null;
   localPlannerResponseImportAccepted?: boolean;
+  /** Stage 135: Local Coder Task Prompt (low priority). */
+  localCoderTaskPromptExists?: boolean;
+  localCoderTaskPromptStale?: boolean;
   architectureHealthExists?: boolean;
   architectureHealthStale?: boolean;
   architectureHealthCriticalCount?: number;
@@ -419,6 +425,12 @@ const DAILY_NEXT_EXPECTED_RESULTS: Record<DailyNextActionKind, string> = {
     "Opens Build Mode to revise the local planner response before preparing a coder prompt.",
   "local-planner-response-accepted":
     "Planner response is accepted. Next stage can generate a local coder task prompt.",
+  "generate-local-coder-task-prompt":
+    "Opens Build Mode to generate a Local Coder Task Prompt (copy/paste only — no AI call).",
+  "regenerate-local-coder-task-prompt":
+    "Opens Build Mode to regenerate a stale Local Coder Task Prompt.",
+  "copy-local-coder-task-prompt":
+    "Opens Build Mode so you can copy the Local Coder Task Prompt into a local coder model.",
   "ready-continue":
     "Continue reviewing reports or export Project Memory when ready.",
 };
@@ -1982,13 +1994,51 @@ export function calculateDailyNextAction(
           );
         }
         if (responseAccepted) {
+          const coderExists = Boolean(input.localCoderTaskPromptExists);
+          const coderStale = Boolean(input.localCoderTaskPromptStale);
+          if (coderStale) {
+            return make(
+              "regenerate-local-coder-task-prompt",
+              "Regenerate the Local Coder Task Prompt before using it",
+              "Regenerate the Local Coder Task Prompt before using it.",
+              button(
+                "Open Build Tab",
+                "regenerate-local-coder-task-prompt",
+                "navigate",
+              ),
+              button(
+                "Open Build Tab",
+                "local-planner-response-accepted",
+                "navigate",
+              ),
+              freshness,
+            );
+          }
+          if (!coderExists) {
+            return make(
+              "generate-local-coder-task-prompt",
+              "Generate a Local Coder Task Prompt for the accepted planner response",
+              "Generate a Local Coder Task Prompt for the accepted planner response.",
+              button(
+                "Open Build Tab",
+                "generate-local-coder-task-prompt",
+                "navigate",
+              ),
+              button(
+                "Open Build Tab",
+                "local-planner-response-accepted",
+                "navigate",
+              ),
+              freshness,
+            );
+          }
           return make(
-            "local-planner-response-accepted",
-            "Planner response is accepted. Next stage can generate a local coder task prompt",
-            "Planner response is accepted. Next stage can generate a local coder task prompt.",
+            "copy-local-coder-task-prompt",
+            "Copy the Local Coder Task Prompt into a local coder model and import the response in a later stage",
+            "Copy the Local Coder Task Prompt into a local coder model and import the response in a later stage.",
             button(
               "Open Build Tab",
-              "local-planner-response-accepted",
+              "copy-local-coder-task-prompt",
               "navigate",
             ),
             button(

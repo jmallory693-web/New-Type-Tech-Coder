@@ -90,6 +90,9 @@ import {
 import {
   emptyLocalPlannerResponseImportState,
 } from "../shared/buildModeLocalPlannerResponseImport";
+import {
+  emptyLocalCoderTaskPromptState,
+} from "../shared/buildModeLocalCoderTaskPrompt";
 import { BuildModeTab } from "./components/BuildModeTab";
 import { ReportsArchitectureSection } from "./components/ReportsArchitectureSection";
 import { buildReportsArchitectureSectionProps } from "./components/reportsArchitectureSectionProps";
@@ -619,6 +622,7 @@ const emptySafeScaffoldWrite = {
 
 const emptyLocalPlannerBuildBrief = emptyLocalPlannerBuildBriefState();
 const emptyLocalPlannerResponseImport = emptyLocalPlannerResponseImportState();
+const emptyLocalCoderTaskPrompt = emptyLocalCoderTaskPromptState();
 
 const emptyArchitectureRefactorTaskCards = {
   saved: null,
@@ -760,6 +764,7 @@ const emptySnapshot: AppSnapshot = {
   safeScaffoldWrite: emptySafeScaffoldWrite,
   localPlannerBuildBrief: emptyLocalPlannerBuildBrief,
   localPlannerResponseImport: emptyLocalPlannerResponseImport,
+  localCoderTaskPrompt: emptyLocalCoderTaskPrompt,
   architectureRefactorTaskCards: emptyArchitectureRefactorTaskCards,
   architectureRefactorTaskBuilderHandoff: emptyArchitectureRefactorTaskBuilderHandoff,
   architectureRefactorTaskImplementationIntake:
@@ -4775,6 +4780,8 @@ export function App() {
     snapshot.localPlannerBuildBrief ?? emptyLocalPlannerBuildBrief;
   const localPlannerResponseImport =
     snapshot.localPlannerResponseImport ?? emptyLocalPlannerResponseImport;
+  const localCoderTaskPrompt =
+    snapshot.localCoderTaskPrompt ?? emptyLocalCoderTaskPrompt;
   const architectureRefactorTaskCards =
     snapshot.architectureRefactorTaskCards ?? emptyArchitectureRefactorTaskCards;
   const architectureRefactorTaskBuilderHandoff =
@@ -5151,6 +5158,8 @@ export function App() {
       localPlannerResponseImport.saved?.acceptedForCoderPromptPrep &&
         !localPlannerResponseImport.saved?.stale,
     ),
+    localCoderTaskPromptExists: Boolean(localCoderTaskPrompt.saved),
+    localCoderTaskPromptStale: Boolean(localCoderTaskPrompt.saved?.stale),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -5267,6 +5276,8 @@ export function App() {
       localPlannerResponseImport.saved?.acceptedForCoderPromptPrep &&
         !localPlannerResponseImport.saved?.stale,
     ),
+    localCoderTaskPromptExists: Boolean(localCoderTaskPrompt.saved),
+    localCoderTaskPromptStale: Boolean(localCoderTaskPrompt.saved?.stale),
     architectureHealthExists: Boolean(
       architectureHealth.saved && !architectureHealth.saved.stale,
     ),
@@ -8588,6 +8599,16 @@ export function App() {
         );
         return;
       }
+      case "generate-local-coder-task-prompt":
+      case "regenerate-local-coder-task-prompt":
+      case "copy-local-coder-task-prompt": {
+        await navigateOnly(
+          "build",
+          "build-mode-local-coder-task-prompt",
+          "Use Local Coder Task Prompt on the Build tab (copy/paste only — no AI call).",
+        );
+        return;
+      }
       default: {
         const _exhaustive: never = kind;
         void _exhaustive;
@@ -9047,6 +9068,7 @@ export function App() {
             safeScaffoldWrite={safeScaffoldWrite}
             localPlannerBuildBrief={localPlannerBuildBrief}
             localPlannerResponseImport={localPlannerResponseImport}
+            localCoderTaskPrompt={localCoderTaskPrompt}
             taskCardOptions={(blueprint.phaseTaskCards.saved?.cards ?? []).map(
               (c) => ({ id: c.id, title: c.title }),
             )}
@@ -9256,6 +9278,35 @@ export function App() {
               const next =
                 await window.nttc.markLocalPlannerResponseAcceptedForCoderPromptPrep();
               setSnapshot(next);
+            }}
+            onSetLocalCoderTaskPromptOptions={async (options) => {
+              const next =
+                await window.nttc.setLocalCoderTaskPromptOptions(options);
+              setSnapshot(next);
+            }}
+            onGenerateLocalCoderTaskPrompt={async () => {
+              const next = await window.nttc.generateLocalCoderTaskPrompt();
+              setSnapshot(next);
+            }}
+            onClearLocalCoderTaskPrompt={async () => {
+              const next = await window.nttc.clearLocalCoderTaskPrompt();
+              setSnapshot(next);
+            }}
+            onCopyLocalCoderTaskPrompt={async () => {
+              const md = localCoderTaskPrompt.saved?.markdown;
+              if (!md) return;
+              try {
+                await navigator.clipboard.writeText(md);
+                const next =
+                  await window.nttc.recordCopyLocalCoderTaskPrompt();
+                setSnapshot(next);
+              } catch {
+                await window.nttc.logUiAction(
+                  "warning",
+                  "Copy Local Coder Task Prompt failed",
+                  "Clipboard write failed.",
+                );
+              }
             }}
           />
         ) : null}

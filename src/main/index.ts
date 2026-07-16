@@ -61,6 +61,7 @@ import { SafeScaffoldFinalConfirmationManager } from "./buildMode/SafeScaffoldFi
 import { SafeScaffoldWriteManager } from "./buildMode/SafeScaffoldWriteManager";
 import { LocalPlannerBuildBriefManager } from "./buildMode/LocalPlannerBuildBriefManager";
 import { LocalPlannerResponseImportManager } from "./buildMode/LocalPlannerResponseImportManager";
+import { LocalCoderTaskPromptManager } from "./buildMode/LocalCoderTaskPromptManager";
 import {
   SAFE_SCAFFOLD_WRITE_DIALOG_DETAIL,
   SAFE_SCAFFOLD_WRITE_DIALOG_MESSAGE,
@@ -205,6 +206,7 @@ const localPlannerBuildBriefManager = new LocalPlannerBuildBriefManager(
 const localPlannerResponseImportManager = new LocalPlannerResponseImportManager(
   safetyGate,
 );
+const localCoderTaskPromptManager = new LocalCoderTaskPromptManager(safetyGate);
 const architectureRefactorTaskCardsManager =
   new ArchitectureRefactorTaskCardsManager(safetyGate);
 const architectureRefactorTaskBuilderHandoffManager =
@@ -496,6 +498,7 @@ function getProjectMemoryInput() {
     safeScaffoldWriteResult: safeScaffoldWriteManager.getSaved(),
     localPlannerBuildBrief: localPlannerBuildBriefManager.getSaved(),
     localPlannerResponseImport: localPlannerResponseImportManager.getSaved(),
+    localCoderTaskPrompt: localCoderTaskPromptManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -573,6 +576,7 @@ function getBlueprintPersistenceFields() {
     safeScaffoldWriteResult: safeScaffoldWriteManager.getSaved(),
     localPlannerBuildBrief: localPlannerBuildBriefManager.getSaved(),
     localPlannerResponseImport: localPlannerResponseImportManager.getSaved(),
+    localCoderTaskPrompt: localCoderTaskPromptManager.getSaved(),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getSaved(),
     architectureRefactorTaskBuilderHandoff:
       architectureRefactorTaskBuilderHandoffManager.getSaved(),
@@ -878,6 +882,7 @@ function getLocalPlannerBuildBriefContext() {
 function markLocalPlannerArtifactsStale(reason: string): void {
   localPlannerBuildBriefManager.markStale(reason);
   localPlannerResponseImportManager.markStale(reason);
+  localCoderTaskPromptManager.markStale(reason);
 }
 
 function getLocalPlannerResponseImportContext() {
@@ -894,6 +899,46 @@ function getLocalPlannerResponseImportContext() {
     sourceBriefTargetLocalModelType: brief?.targetLocalModelType ?? null,
     sourceSelectedTaskId: brief?.selectedTaskId ?? null,
     sourceSelectedTaskTitle: brief?.selectedTaskTitle ?? null,
+  };
+}
+
+function getLocalCoderTaskPromptContext() {
+  const briefCtx = getLocalPlannerBuildBriefContext();
+  const responseState = localPlannerResponseImportManager.getState(
+    getLocalPlannerResponseImportContext(),
+  );
+  const response = responseState.saved;
+  const tree = safeScaffoldFileTreePreviewManager.getSaved();
+  const write = safeScaffoldWriteManager.getSaved();
+
+  return {
+    plannerResponseExists: Boolean(response),
+    plannerResponseStale: Boolean(response?.stale),
+    plannerResponseStatus: response?.status ?? null,
+    acceptedForCoderPromptPrep: Boolean(
+      response?.acceptedForCoderPromptPrep && !response?.stale,
+    ),
+    plannerResponseAcceptedAt: response?.acceptedAt ?? null,
+    plannerResponseAnalyzedAt: response?.analyzedAt ?? null,
+    recommendedNextTask: response?.parsed?.recommendedNextTask ?? null,
+    whyThisTask: response?.parsed?.whyThisTask ?? null,
+    likelyFiles: response?.parsed?.likelyFiles ?? [],
+    filesNotToTouch: response?.parsed?.filesNotToTouch ?? [],
+    risks: response?.parsed?.risks ?? [],
+    acceptanceChecks: response?.parsed?.acceptanceChecks ?? [],
+    coderPromptOutline: response?.parsed?.coderPromptOutline ?? null,
+    stopConditions: response?.parsed?.stopConditions ?? [],
+    blueprintProjectType: briefCtx.blueprintProjectType,
+    targetFolderPath: briefCtx.targetFolderPath,
+    targetSafetyStatus: briefCtx.targetSafetyStatus,
+    scaffoldWriteWrittenAt: write?.writtenAt ?? null,
+    scaffoldCreatedRelativePaths: write?.createdRelativePaths ?? [],
+    fileTreeGeneratedAt: tree?.generatedAt ?? null,
+    fileTreeProposedPaths: tree?.proposedRelativePaths ?? [],
+    selectedTaskTitle:
+      response?.sourceSelectedTaskTitle ??
+      localPlannerBuildBriefManager.getSaved()?.selectedTaskTitle ??
+      null,
   };
 }
 
@@ -966,6 +1011,9 @@ function buildSnapshot(): AppSnapshot {
     ),
     localPlannerResponseImport: localPlannerResponseImportManager.getState(
       getLocalPlannerResponseImportContext(),
+    ),
+    localCoderTaskPrompt: localCoderTaskPromptManager.getState(
+      getLocalCoderTaskPromptContext(),
     ),
     architectureRefactorTaskCards: architectureRefactorTaskCardsManager.getState(),
     architectureRefactorTaskBuilderHandoff:
@@ -1174,6 +1222,7 @@ function resetSessionForProjectChange(): void {
   safeScaffoldWriteManager.clearForProjectChange();
   localPlannerBuildBriefManager.clearForProjectChange();
   localPlannerResponseImportManager.clearForProjectChange();
+  localCoderTaskPromptManager.clearForProjectChange();
   architectureRefactorTaskCardsManager.clearForProjectChange();
   architectureRefactorTaskBuilderHandoffManager.clearForProjectChange();
   architectureRefactorTaskImplementationIntakeManager.clearForProjectChange();
@@ -1360,6 +1409,9 @@ function openProjectPath(
       );
       localPlannerResponseImportManager.restoreSaved(
         saved.localPlannerResponseImport ?? null,
+      );
+      localCoderTaskPromptManager.restoreSaved(
+        saved.localCoderTaskPrompt ?? null,
       );
       architectureRefactorTaskCardsManager.restoreSaved(
         saved.architectureRefactorTaskCards ?? null,
@@ -5413,6 +5465,9 @@ function registerIpc(): void {
           localPlannerResponseImportManager.markStale(
             "Focus task selection changed.",
           );
+          localCoderTaskPromptManager.markStale(
+            "Focus task selection changed.",
+          );
         }
         persistSessionHistory();
       }
@@ -5425,6 +5480,9 @@ function registerIpc(): void {
     IPC_CHANNELS.generateLocalPlannerBuildBrief,
     (_event, options: unknown) => {
       localPlannerResponseImportManager.markStale(
+        "Local Planner Build Brief regenerated.",
+      );
+      localCoderTaskPromptManager.markStale(
         "Local Planner Build Brief regenerated.",
       );
       localPlannerBuildBriefManager.generate(
@@ -5448,6 +5506,9 @@ function registerIpc(): void {
     localPlannerResponseImportManager.markStale(
       "Local Planner Build Brief cleared.",
     );
+    localCoderTaskPromptManager.markStale(
+      "Local Planner Build Brief cleared.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5469,6 +5530,9 @@ function registerIpc(): void {
   );
 
   ipcMain.handle(IPC_CHANNELS.analyzeLocalPlannerResponse, () => {
+    localCoderTaskPromptManager.markStale(
+      "Local Planner Response analyzed/changed.",
+    );
     localPlannerResponseImportManager.analyze(
       getLocalPlannerResponseImportContext(),
     );
@@ -5479,6 +5543,9 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC_CHANNELS.clearLocalPlannerResponse, () => {
     localPlannerResponseImportManager.clear();
+    localCoderTaskPromptManager.markStale(
+      "Local Planner Response Import cleared.",
+    );
     persistSessionHistory();
     broadcastSnapshot();
     return buildSnapshot();
@@ -5493,6 +5560,9 @@ function registerIpc(): void {
   ipcMain.handle(
     IPC_CHANNELS.markLocalPlannerResponseAcceptedForCoderPromptPrep,
     () => {
+      localCoderTaskPromptManager.markStale(
+        "Planner response accepted marker changed.",
+      );
       localPlannerResponseImportManager.markAcceptedForCoderPromptPrep(
         getLocalPlannerResponseImportContext(),
       );
@@ -5501,6 +5571,52 @@ function registerIpc(): void {
       return buildSnapshot();
     },
   );
+
+  ipcMain.handle(
+    IPC_CHANNELS.setLocalCoderTaskPromptOptions,
+    (_event, options: unknown) => {
+      if (options && typeof options === "object") {
+        localCoderTaskPromptManager.setOptions(
+          options as {
+            promptStyle?: import("../shared/buildModeLocalCoderTaskPrompt").LocalCoderPromptStyle;
+          },
+        );
+        persistSessionHistory();
+      }
+      broadcastSnapshot();
+      return buildSnapshot();
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.generateLocalCoderTaskPrompt,
+    (_event, options: unknown) => {
+      localCoderTaskPromptManager.generate(
+        getLocalCoderTaskPromptContext(),
+        options && typeof options === "object"
+          ? (options as {
+              promptStyle?: import("../shared/buildModeLocalCoderTaskPrompt").LocalCoderPromptStyle;
+            })
+          : undefined,
+      );
+      persistSessionHistory();
+      broadcastSnapshot();
+      return buildSnapshot();
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.clearLocalCoderTaskPrompt, () => {
+    localCoderTaskPromptManager.clear();
+    persistSessionHistory();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.recordCopyLocalCoderTaskPrompt, () => {
+    localCoderTaskPromptManager.recordCopy();
+    broadcastSnapshot();
+    return buildSnapshot();
+  });
 
   ipcMain.handle(IPC_CHANNELS.setPlanningStyle, (_event, style) => {
     planningStyleManager.setStyle(style);
